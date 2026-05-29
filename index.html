@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kirkham Feeds — Google News RSS Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0b;
+      --bg-card: #141416;
+      --bg-card-hover: #1a1a1e;
+      --bg-input: #1a1a1e;
+      --border: #2a2a2e;
+      --border-focus: #5b5bf0;
+      --text: #e8e8ec;
+      --text-muted: #8888a0;
+      --text-dim: #55556a;
+      --accent: #6c6cf0;
+      --accent-hover: #7e7ef8;
+      --accent-dim: rgba(108, 108, 240, 0.15);
+      --green: #34d399;
+      --green-dim: rgba(52, 211, 153, 0.15);
+      --orange: #fb923c;
+      --orange-dim: rgba(251, 146, 60, 0.15);
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.15);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .header h1 span { color: var(--accent); }
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Search input */
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      padding-right: 3rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-wrap input:focus {
+      border-color: var(--border-focus);
+    }
+    .search-wrap input::placeholder {
+      color: var(--text-dim);
+    }
+    .search-wrap .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    /* Suggestion chips */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .suggestions:empty { margin-top: 0; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--accent-dim);
+      border: 1px solid transparent;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    .chip.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .chip.selected:hover {
+      opacity: 0.85;
+    }
+    .chip .chip-x {
+      font-size: 0.7rem;
+      margin-left: 0.15rem;
+    }
+    .chip-custom {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+    .chip-custom:hover, .chip-custom.selected {
+      background: var(--green);
+      color: #fff;
+    }
+
+    /* Exclude chips */
+    .chip-exclude {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+    .chip-exclude:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* Add custom term */
+    .add-custom {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.7rem;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-custom:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    /* Query operator controls */
+    .query-controls {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .query-controls.visible { display: block; }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .controls-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .op-btn-group {
+      display: inline-flex;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .op-btn {
+      padding: 0.35rem 0.85rem;
+      background: var(--bg-input);
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .op-btn:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+    .op-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text);
+    }
+    .op-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .exclude-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0.7rem;
+      background: transparent;
+      border: 1px dashed var(--red);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      color: var(--red);
+      cursor: pointer;
+      transition: all 0.15s;
+      opacity: 0.7;
+    }
+    .exclude-btn:hover {
+      opacity: 1;
+      background: var(--red-dim);
+    }
+
+    .exclude-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .exclude-chips:empty { margin-top: 0; }
+
+    /* Query preview */
+    .query-preview {
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.85rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: none;
+    }
+    .query-preview.visible { display: block; }
+    .query-preview .qp-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 0.3rem;
+    }
+    .query-preview .qp-query {
+      color: var(--orange);
+      word-break: break-all;
+    }
+    .query-preview .qp-query .qp-op {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .query-preview .qp-query .qp-not {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    /* Syntax hint */
+    .syntax-hint {
+      margin-top: 0.6rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .syntax-hint summary {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 500;
+      user-select: none;
+    }
+    .syntax-hint summary:hover { color: var(--text); }
+    .syntax-hint .hint-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 0.75rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0;
+    }
+    .syntax-hint code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--orange);
+      font-size: 0.72rem;
+    }
+
+    /* Parameters grid */
+    .params-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      .params-grid { grid-template-columns: 1fr; }
+    }
+    .param-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .param-group select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888a0' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+    }
+    .param-group select:focus {
+      border-color: var(--border-focus);
+    }
+
+    /* URL output */
+    .url-output {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .url-box {
+      flex: 1;
+      padding: 0.7rem 0.85rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: text;
+      user-select: all;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.1rem;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: scale(0.97); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+    .btn-sm {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.8rem;
+    }
+    .copied-msg {
+      font-size: 0.8rem;
+      color: var(--green);
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .copied-msg.show { opacity: 1; }
+
+    /* Preview section */
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .preview-header h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .preview-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .preview-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+    .preview-loading {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .preview-loading .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Article cards */
+    .article {
+      display: flex;
+      gap: 0.85rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .article:last-child { border-bottom: none; }
+    .article-favicon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-input);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .article-favicon img {
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
+    }
+    .article-body { flex: 1; min-width: 0; }
+    .article-source-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.25rem;
+    }
+    .article-source {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .article-time {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+    .article-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 0.3rem;
+    }
+    .article-title a {
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .article-title a:hover { color: var(--accent); }
+    .article-snippet {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Google News link */
+    .gn-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      padding: 0.45rem 0.85rem;
+      background: var(--accent-dim);
+      border: 1px solid transparent;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .gn-link:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    .gn-link svg { flex-shrink: 0; }
+
+    /* Email digest section */
+    .digest-section {
+      margin-top: 2rem;
+    }
+    .digest-section h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .digest-section > p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+    .digest-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      .digest-grid { grid-template-columns: 1fr; }
+    }
+    .digest-grid .full-width {
+      grid-column: 1 / -1;
+    }
+    textarea {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--border-focus); }
+    textarea::placeholder { color: var(--text-dim); }
+    input[type="email"], input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="email"]:focus, input[type="text"]:focus { border-color: var(--border-focus); }
+    input[type="email"]::placeholder, input[type="text"]::placeholder { color: var(--text-dim); }
+
+    /* Email preview */
+    .email-preview {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 2rem;
+      color: #1a1a2e;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .email-preview h2 {
+      color: #1a1a2e;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    .email-preview .ep-date {
+      color: #666;
+      font-size: 0.8rem;
+      margin-bottom: 1.25rem;
+    }
+    .email-preview .ep-section-header {
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1a1a2e;
+      border-bottom: 2px solid #1a1a2e;
+      padding-bottom: 0.3rem;
+      margin: 1.5rem 0 0.75rem;
+    }
+    .email-preview .ep-item {
+      margin-bottom: 1rem;
+    }
+    .email-preview .ep-item-title {
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .email-preview .ep-item-date {
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .email-preview .ep-item-snippet {
+      color: #444;
+      font-size: 0.82rem;
+    }
+    .email-preview .ep-item-source {
+      font-size: 0.75rem;
+      color: #6c6cf0;
+    }
+    .email-preview .ep-footer {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ddd;
+      color: #888;
+      font-size: 0.78rem;
+    }
+    .email-preview .ep-header-custom {
+      margin-bottom: 1.25rem;
+      white-space: pre-wrap;
+    }
+    .email-preview .ep-footer-custom {
+      white-space: pre-wrap;
+    }
+
+    /* Tabs */
+    .tab-row {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .tab-btn {
+      padding: 0.6rem 1.1rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(1rem);
+      background: var(--green);
+      color: #000;
+      padding: 0.65rem 1.25rem;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1><span>Kirkham Feeds</span></h1>
+    <p>Build Google News RSS feeds with AND/OR logic. Get email digests. No account needed.</p>
+  </div>
+
+  <!-- Step 1: Search -->
+  <div class="card">
+    <div class="card-label">1. What do you want to track?</div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="e.g. Arsenal, artificial intelligence, Tesla..." autofocus>
+      <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+
+    <!-- Query operator controls (visible when terms are added) -->
+    <div class="query-controls" id="queryControls">
+      <div class="controls-row">
+        <span class="controls-label">Combine terms with:</span>
+        <div class="op-btn-group">
+          <button class="op-btn" data-op="AND" onclick="setOperator('AND')">AND</button>
+          <button class="op-btn active" data-op="OR" onclick="setOperator('OR')">OR</button>
+        </div>
+        <button class="exclude-btn" onclick="addExcludeTerm()">&#8722; Exclude term</button>
+      </div>
+      <div class="exclude-chips" id="excludeChips"></div>
+
+      <!-- Query preview -->
+      <div class="query-preview" id="queryPreview">
+        <div class="qp-label">Query sent to Google News</div>
+        <div class="qp-query" id="queryPreviewText"></div>
+      </div>
+
+      <!-- Syntax hint -->
+      <details class="syntax-hint">
+        <summary>Google News query syntax</summary>
+        <div class="hint-grid">
+          <code>Arsenal Tesla</code><span>AND — both must appear (spaces = AND)</span>
+          <code>Arsenal OR Chelsea</code><span>OR — either term matches</span>
+          <code>-Chelsea</code><span>NOT — exclude articles mentioning this</span>
+          <code>"Mikel Arteta"</code><span>Exact phrase (auto-quoted for multi-word terms)</span>
+          <code>site:bbc.co.uk</code><span>Only from a specific source</span>
+          <code>when:7d</code><span>Time filter (1h, 1d, 7d, 30d)</span>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Step 2: Parameters -->
+  <div class="card">
+    <div class="card-label">2. Refine</div>
+    <div class="params-grid">
+      <div class="param-group">
+        <label>Language</label>
+        <select id="langSelect">
+          <option value="en-GB" selected>English (UK)</option>
+          <option value="en-US">English (US)</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="pt-BR">Portuguese (Brazil)</option>
+          <option value="ja">Japanese</option>
+          <option value="ko">Korean</option>
+          <option value="zh-CN">Chinese (Simplified)</option>
+          <option value="ar">Arabic</option>
+          <option value="hi">Hindi</option>
+          <option value="nl">Dutch</option>
+          <option value="sv">Swedish</option>
+          <option value="pl">Polish</option>
+          <option value="tr">Turkish</option>
+        </select>
+      </div>
+      <div class="param-group">
+        <label>Country</label>
+        <select id="countrySelect">
+          <option value="GB" selected>United Kingdom</option>
+          <option value="US">United States</option>
+          <option value="ES">Spain</option>
+          <option value="FR">France</option>
+          <option value="DE">Germany</option>
+          <option value="IT">Italy</option>
+          <option value="BR">Brazil</option>
+          <option value="JP">Japan</option>
+          <option value="KR">South Korea</option>
+          <option value="CN">China</option>
+          <option value="IN">India</option>
+          <option value="NL">Netherlands</option>
+          <option value="SE">Sweden</option>
+          <option value="PL">Poland</option>
+          <option value="TR">Turkey</option>
+          <option value="AU">Australia</option>
+          <option value="CA">Canada</option>
+        </select>
+      </div>
+      <div class="param-group">
+        <label>Time window</label>
+        <select id="whenSelect">
+          <option value="">All time</option>
+          <option value="1h">Last hour</option>
+          <option value="1d" selected>Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Your RSS URL -->
+  <div class="card">
+    <div class="card-label">3. Your RSS feed</div>
+    <div class="url-output">
+      <div class="url-box" id="urlBox">Enter a search term above...</div>
+      <button class="btn btn-sm" id="copyBtn" onclick="copyUrl()">Copy</button>
+      <span class="copied-msg" id="copiedMsg">Copied</span>
+    </div>
+  </div>
+
+  <!-- Step 4: Preview -->
+  <div class="card">
+    <div class="card-label">4. Preview</div>
+    <div id="previewArea">
+      <div class="preview-empty">Type a search term to see a live preview of your feed</div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- Email Digest Section -->
+  <div class="digest-section">
+    <h2>Email digest</h2>
+    <p>Get your feed delivered as a formatted briefing. Customise the header and footer to match your brand.</p>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('configure')">Configure</button>
+      <button class="tab-btn" onclick="switchTab('preview-email')">Preview</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-configure">
+      <div class="card" style="margin-bottom: 0.75rem;">
+        <div class="card-label">Briefing title</div>
+        <input type="text" id="digestTitle" placeholder="e.g. AI & Financial Services Daily Briefing" value="">
+      </div>
+
+      <div class="digest-grid">
+        <div class="card">
+          <div class="card-label">Header (top)</div>
+          <textarea id="digestHeader" placeholder="Custom intro text that appears at the top of each email..."></textarea>
+        </div>
+        <div class="card">
+          <div class="card-label">Footer (tail)</div>
+          <textarea id="digestFooter" placeholder="e.g. Produced by Your Company.&#10;For internal use only."></textarea>
+        </div>
+      </div>
+
+      <div class="digest-grid" style="margin-top: 0.75rem;">
+        <div class="card">
+          <div class="card-label">Deliver to</div>
+          <input type="email" id="digestEmail" placeholder="you@example.com">
+        </div>
+        <div class="card">
+          <div class="card-label">Schedule</div>
+          <select id="digestSchedule" style="width:100%;padding:0.6rem 0.75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;font-family:inherit;outline:none;cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888a0' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 0.75rem center;">
+            <option value="daily-morning">Daily at 7am</option>
+            <option value="daily-evening">Daily at 6pm</option>
+            <option value="weekly-monday">Weekly (Monday morning)</option>
+            <option value="weekly-friday">Weekly (Friday morning)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 1rem; text-align: right;">
+        <button class="btn" id="digestSaveBtn" onclick="saveDigestConfig()">Save digest settings</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-preview-email">
+      <div class="card">
+        <div class="email-preview" id="emailPreview">
+          <p style="color: #888; text-align: center;">Configure your digest above, then switch to Preview to see how it'll look.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// SUGGESTIONS DATABASE
+// ============================================
+const SUGGESTIONS = {
+  // Premier League
+  'arsenal': ['Arsenal FC', 'The Gunners', 'Gooners', 'AFC', 'Mikel Arteta'],
+  'man city': ['Manchester City', 'Man City FC', 'MCFC', 'The Citizens', 'Pep Guardiola'],
+  'manchester city': ['Man City', 'MCFC', 'The Citizens', 'Pep Guardiola', 'Etihad'],
+  'man united': ['Manchester United', 'Man Utd', 'MUFC', 'Red Devils', 'Old Trafford'],
+  'manchester united': ['Man United', 'Man Utd', 'MUFC', 'Red Devils', 'Old Trafford'],
+  'liverpool': ['Liverpool FC', 'LFC', 'The Reds', 'Anfield'],
+  'chelsea': ['Chelsea FC', 'CFC', 'The Blues', 'Stamford Bridge'],
+  'tottenham': ['Tottenham Hotspur', 'Spurs', 'THFC', 'Tottenham FC'],
+  'spurs': ['Tottenham Hotspur', 'Tottenham', 'THFC', 'Tottenham FC'],
+  'newcastle': ['Newcastle United', 'NUFC', 'The Magpies', 'Toon Army'],
+  'aston villa': ['Aston Villa FC', 'AVFC', 'Villa', 'The Villans'],
+  'west ham': ['West Ham United', 'WHUFC', 'The Hammers', 'The Irons'],
+  'brighton': ['Brighton & Hove Albion', 'Brighton FC', 'BHAFC', 'The Seagulls'],
+  'wolves': ['Wolverhampton Wanderers', 'Wolverhampton', 'Wolves FC', 'WWFC'],
+  'everton': ['Everton FC', 'EFC', 'The Toffees', 'Goodison Park'],
+  'crystal palace': ['Crystal Palace FC', 'CPFC', 'The Eagles', 'Palace'],
+  'fulham': ['Fulham FC', 'FFC', 'The Cottagers', 'Craven Cottage'],
+  'bournemouth': ['AFC Bournemouth', 'Bournemouth FC', 'The Cherries'],
+  'brentford': ['Brentford FC', 'The Bees', 'BFC'],
+  'nottingham forest': ['Nottingham Forest FC', 'NFFC', 'Forest', 'The Reds'],
+  'leicester': ['Leicester City', 'LCFC', 'The Foxes', 'Leicester City FC'],
+  'ipswich': ['Ipswich Town', 'ITFC', 'The Tractor Boys', 'Ipswich Town FC'],
+  'southampton': ['Southampton FC', 'The Saints', 'SFC'],
+
+  // Big European clubs
+  'real madrid': ['Real Madrid CF', 'Los Blancos', 'Real', 'RMCF', 'Santiago Bernabeu'],
+  'barcelona': ['FC Barcelona', 'Barca', 'FCB', 'Blaugrana'],
+  'bayern munich': ['Bayern Munchen', 'FC Bayern', 'Bayern', 'FCB Munich'],
+  'psg': ['Paris Saint-Germain', 'Paris SG', 'PSG FC'],
+  'juventus': ['Juventus FC', 'Juve', 'The Old Lady', 'Bianconeri'],
+  'ac milan': ['AC Milan', 'Milan', 'Rossoneri', 'ACM'],
+  'inter milan': ['Inter', 'Internazionale', 'Nerazzurri', 'Inter FC'],
+
+  // Tech
+  'apple': ['Apple Inc', 'AAPL', 'iPhone', 'Tim Cook'],
+  'google': ['Alphabet', 'GOOGL', 'Google Inc', 'Sundar Pichai'],
+  'microsoft': ['Microsoft Corp', 'MSFT', 'Satya Nadella', 'Azure'],
+  'amazon': ['Amazon.com', 'AMZN', 'AWS', 'Andy Jassy'],
+  'tesla': ['Tesla Inc', 'TSLA', 'Elon Musk Tesla', 'Tesla Motors'],
+  'meta': ['Meta Platforms', 'Facebook', 'META stock', 'Mark Zuckerberg'],
+  'nvidia': ['NVIDIA Corp', 'NVDA', 'Jensen Huang', 'NVIDIA AI'],
+  'openai': ['OpenAI', 'ChatGPT', 'GPT', 'Sam Altman'],
+  'anthropic': ['Anthropic AI', 'Claude AI', 'Dario Amodei'],
+
+  // AI topics
+  'artificial intelligence': ['AI', 'machine learning', 'deep learning', 'generative AI'],
+  'ai': ['artificial intelligence', 'machine learning', 'generative AI', 'AI regulation'],
+  'machine learning': ['ML', 'deep learning', 'AI', 'neural networks'],
+  'chatgpt': ['ChatGPT', 'OpenAI', 'GPT-5', 'GPT'],
+  'claude': ['Claude AI', 'Anthropic', 'Claude chatbot'],
+
+  // Finance
+  'bitcoin': ['BTC', 'Bitcoin price', 'cryptocurrency', 'crypto'],
+  'ethereum': ['ETH', 'Ethereum price', 'Ether'],
+  'crypto': ['cryptocurrency', 'Bitcoin', 'Ethereum', 'DeFi', 'Web3'],
+
+  // Politics / General
+  'uk politics': ['Westminster', 'UK government', 'Downing Street', 'Parliament'],
+  'us politics': ['Washington DC', 'White House', 'Congress', 'US government'],
+  'climate change': ['global warming', 'climate crisis', 'net zero', 'carbon emissions'],
+  'ukraine': ['Ukraine war', 'Russia Ukraine', 'Zelensky', 'Ukraine conflict'],
+  'israel': ['Israel Gaza', 'Israel Palestine', 'Netanyahu', 'Middle East conflict'],
+};
+
+// ============================================
+// STATE
+// ============================================
+let selectedTerms = [];
+let customTerms = [];
+let excludeTerms = [];
+let queryOperator = 'OR';
+let articles = [];
+let previewTimeout = null;
+
+// ============================================
+// CORE LOGIC
+// ============================================
+
+function getSearchTerm() {
+  return document.getElementById('searchInput').value.trim();
+}
+
+function buildQuery() {
+  const base = getSearchTerm();
+  if (!base && selectedTerms.length === 0 && customTerms.length === 0) return '';
+
+  const allTerms = [];
+  if (base) allTerms.push(base.includes(' ') ? `"${base}"` : base);
+
+  selectedTerms.forEach(t => {
+    if (t.toLowerCase() !== base.toLowerCase()) {
+      allTerms.push(t.includes(' ') ? `"${t}"` : t);
+    }
+  });
+
+  customTerms.forEach(t => {
+    if (t.toLowerCase() !== base.toLowerCase()) {
+      allTerms.push(t.includes(' ') ? `"${t}"` : t);
+    }
+  });
+
+  let query;
+  if (allTerms.length <= 1) {
+    query = allTerms[0] || '';
+  } else if (queryOperator === 'AND') {
+    // Spaces = implicit AND in Google News
+    query = allTerms.join(' ');
+  } else {
+    query = allTerms.join(' OR ');
+  }
+
+  // Add exclusions
+  excludeTerms.forEach(t => {
+    query += ' -' + (t.includes(' ') ? `"${t}"` : t);
+  });
+
+  return query;
+}
+
+function buildUrl() {
+  const query = buildQuery();
+  if (!query) return '';
+
+  const lang = document.getElementById('langSelect').value;
+  const country = document.getElementById('countrySelect').value;
+  const when = document.getElementById('whenSelect').value;
+
+  const langShort = lang.split('-')[0];
+
+  let url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${lang}&gl=${country}&ceid=${country}:${langShort}`;
+  if (when) url += `&when=${when}`;
+
+  return url;
+}
+
+function updateUrl() {
+  const url = buildUrl();
+  const urlBox = document.getElementById('urlBox');
+
+  if (!url) {
+    urlBox.textContent = 'Enter a search term above...';
+    urlBox.style.color = 'var(--text-dim)';
+  } else {
+    urlBox.textContent = url;
+    urlBox.style.color = 'var(--accent)';
+  }
+
+  // Update query controls visibility
+  const hasTerms = selectedTerms.length > 0 || customTerms.length > 0;
+  document.getElementById('queryControls').classList.toggle('visible', hasTerms);
+
+  // Update query preview
+  updateQueryPreview();
+
+  // Debounced preview
+  clearTimeout(previewTimeout);
+  if (url) {
+    previewTimeout = setTimeout(() => fetchPreview(url), 600);
+  } else {
+    document.getElementById('previewArea').innerHTML = '<div class="preview-empty">Type a search term to see a live preview of your feed</div>';
+  }
+}
+
+function updateQueryPreview() {
+  const query = buildQuery();
+  const previewEl = document.getElementById('queryPreview');
+  const previewText = document.getElementById('queryPreviewText');
+
+  if (!query || (selectedTerms.length === 0 && customTerms.length === 0 && excludeTerms.length === 0)) {
+    previewEl.classList.remove('visible');
+    return;
+  }
+
+  previewEl.classList.add('visible');
+
+  // Syntax-highlight the query
+  let highlighted = query
+    .replace(/\bOR\b/g, '<span class="qp-op">OR</span>')
+    .replace(/\s-("?)([^"\s]+)\1/g, ' <span class="qp-not">-$1$2$1</span>');
+
+  previewText.innerHTML = highlighted;
+}
+
+function setOperator(op) {
+  queryOperator = op;
+  document.querySelectorAll('.op-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.op === op);
+  });
+  updateUrl();
+}
+
+function showSuggestions() {
+  const term = getSearchTerm().toLowerCase();
+  const container = document.getElementById('suggestions');
+  container.innerHTML = '';
+
+  if (!term) return;
+
+  // Find matching suggestions
+  let matches = SUGGESTIONS[term] || [];
+
+  // Also try partial matches
+  if (matches.length === 0) {
+    for (const [key, vals] of Object.entries(SUGGESTIONS)) {
+      if (key.includes(term) || term.includes(key)) {
+        matches = vals;
+        break;
+      }
+    }
+  }
+
+  if (matches.length === 0) return;
+
+  matches.forEach(suggestion => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (selectedTerms.includes(suggestion) ? ' selected' : '');
+    chip.textContent = selectedTerms.includes(suggestion) ? suggestion + ' ×' : '+ ' + suggestion;
+    chip.onclick = () => toggleTerm(suggestion);
+    container.appendChild(chip);
+  });
+
+  // Add custom term button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-custom';
+  addBtn.innerHTML = '+ Custom term';
+  addBtn.onclick = addCustomTerm;
+  container.appendChild(addBtn);
+}
+
+function toggleTerm(term) {
+  const idx = selectedTerms.indexOf(term);
+  if (idx >= 0) {
+    selectedTerms.splice(idx, 1);
+  } else {
+    selectedTerms.push(term);
+  }
+  showSuggestions();
+  updateUrl();
+}
+
+function addCustomTerm() {
+  const term = prompt('Add a custom search variation:');
+  if (term && term.trim()) {
+    customTerms.push(term.trim());
+    showSuggestions();
+    updateUrl();
+  }
+}
+
+function addExcludeTerm() {
+  const term = prompt('Exclude articles mentioning:');
+  if (term && term.trim()) {
+    excludeTerms.push(term.trim());
+    renderExcludeChips();
+    updateUrl();
+  }
+}
+
+function removeExcludeTerm(idx) {
+  excludeTerms.splice(idx, 1);
+  renderExcludeChips();
+  updateUrl();
+}
+
+function renderExcludeChips() {
+  const container = document.getElementById('excludeChips');
+  container.innerHTML = '';
+  excludeTerms.forEach((t, i) => {
+    const chip = document.createElement('button');
+    chip.className = 'chip chip-exclude';
+    chip.textContent = '− ' + t + ' ×';
+    chip.onclick = () => removeExcludeTerm(i);
+    container.appendChild(chip);
+  });
+}
+
+function copyUrl() {
+  const url = buildUrl();
+  if (!url) return;
+
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('RSS URL copied to clipboard');
+  });
+}
+
+// ============================================
+// PREVIEW (via proxy or CORS workaround)
+// ============================================
+
+async function fetchPreview(url) {
+  const previewArea = document.getElementById('previewArea');
+  previewArea.innerHTML = '<div class="preview-loading"><div class="spinner"></div><br>Fetching feed...</div>';
+
+  try {
+    // Try Netlify function proxy first, fall back to allorigins
+    let xmlText;
+    try {
+      const proxyUrl = `/.netlify/functions/fetch-rss?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        xmlText = await res.text();
+      } else {
+        throw new Error('Proxy failed');
+      }
+    } catch {
+      // Fallback: use allorigins CORS proxy
+      const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const res = await fetch(fallbackUrl);
+      xmlText = await res.text();
+    }
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'text/xml');
+    const items = xml.querySelectorAll('item');
+
+    articles = [];
+    items.forEach(item => {
+      const title = item.querySelector('title')?.textContent || '';
+      const link = item.querySelector('link')?.textContent || '';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      const sourceEl = item.querySelector('source');
+      const source = sourceEl?.textContent || '';
+      const sourceUrl = sourceEl?.getAttribute('url') || '';
+      const description = item.querySelector('description')?.textContent || '';
+
+      // Extract domain from source URL for favicon
+      let sourceDomain = '';
+      try {
+        if (sourceUrl) sourceDomain = new URL(sourceUrl).hostname;
+      } catch {}
+
+      // Strip HTML from description
+      const tmp = document.createElement('div');
+      tmp.innerHTML = description;
+      const snippet = tmp.textContent.trim().substring(0, 200);
+
+      articles.push({ title, link, pubDate, source, sourceUrl, sourceDomain, snippet });
+    });
+
+    renderPreview();
+
+  } catch (err) {
+    previewArea.innerHTML = `<div class="preview-empty">Couldn't load preview. The RSS URL is still valid -- paste it into your reader.</div>`;
+  }
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const now = new Date();
+  const then = new Date(dateStr);
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return diffMins + 'm ago';
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return diffHrs + 'h ago';
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays < 7) return diffDays + 'd ago';
+  return then.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function renderPreview() {
+  const previewArea = document.getElementById('previewArea');
+
+  if (articles.length === 0) {
+    previewArea.innerHTML = '<div class="preview-empty">No articles found for this query. Try broader terms.</div>';
+    return;
+  }
+
+  const query = buildQuery();
+  const gnSearchUrl = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-GB&gl=GB&ceid=GB:en`;
+
+  let html = `
+    <div class="preview-header">
+      <h3>Feed preview</h3>
+      <span class="preview-count">${articles.length} articles</span>
+    </div>
+  `;
+
+  articles.slice(0, 15).forEach(a => {
+    const ago = timeAgo(a.pubDate);
+    const faviconUrl = a.sourceDomain
+      ? `https://www.google.com/s2/favicons?domain=${a.sourceDomain}&sz=32`
+      : '';
+    html += `
+      <div class="article">
+        ${faviconUrl ? `<div class="article-favicon"><img src="${faviconUrl}" alt="" loading="lazy"></div>` : ''}
+        <div class="article-body">
+          <div class="article-source-row">
+            ${a.source ? `<span class="article-source">${a.source}</span>` : ''}
+            ${ago ? `<span class="article-time">${ago}</span>` : ''}
+          </div>
+          <div class="article-title"><a href="${a.link}" target="_blank" rel="noopener">${a.title}</a></div>
+          ${a.snippet ? `<div class="article-snippet">${a.snippet}</div>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  if (articles.length > 15) {
+    html += `<div style="padding: 0.75rem 0; color: var(--text-muted); font-size: 0.8rem;">+ ${articles.length - 15} more articles in the full feed</div>`;
+  }
+
+  // Google News link
+  html += `
+    <a href="${gnSearchUrl}" target="_blank" rel="noopener" class="gn-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      View in Google News
+    </a>
+  `;
+
+  previewArea.innerHTML = html;
+}
+
+// ============================================
+// EMAIL DIGEST
+// ============================================
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+  event.target.classList.add('active');
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+
+  if (tabName === 'preview-email') {
+    renderEmailPreview();
+  }
+}
+
+function renderEmailPreview() {
+  const preview = document.getElementById('emailPreview');
+  const title = document.getElementById('digestTitle').value || 'Your Daily Briefing';
+  const header = document.getElementById('digestHeader').value;
+  const footer = document.getElementById('digestFooter').value;
+  const query = buildQuery();
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  let html = '';
+
+  // Header
+  html += `<h2>${title}</h2>`;
+  html += `<div class="ep-date">${dateStr}</div>`;
+
+  if (header) {
+    html += `<div class="ep-header-custom">${header}</div>`;
+  }
+
+  // Articles
+  if (articles.length > 0) {
+    html += `<div class="ep-section-header">Latest Coverage</div>`;
+    articles.slice(0, 6).forEach((a, i) => {
+      const date = a.pubDate ? new Date(a.pubDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      html += `
+        <div class="ep-item">
+          <div class="ep-item-title">${i + 1}. ${a.title}</div>
+          ${date ? `<div class="ep-item-date">Date: ${date}</div>` : ''}
+          ${a.snippet ? `<div class="ep-item-snippet">${a.snippet}</div>` : ''}
+          ${a.source ? `<div class="ep-item-source">Source: ${a.source}</div>` : ''}
+        </div>
+      `;
+    });
+  } else if (query) {
+    html += `<div class="ep-section-header">Latest Coverage</div>`;
+    html += `<p style="color: #888; font-style: italic;">Articles matching "${query}" will appear here.</p>`;
+  } else {
+    html += `<p style="color: #888; font-style: italic;">Set up your search terms above to see articles here.</p>`;
+  }
+
+  // Footer
+  html += `<div class="ep-footer">`;
+  if (footer) {
+    html += `<div class="ep-footer-custom">${footer}</div>`;
+  } else {
+    html += `Produced by Kirkham Feeds.`;
+  }
+  html += `</div>`;
+
+  preview.innerHTML = html;
+}
+
+function saveDigestConfig() {
+  const email = document.getElementById('digestEmail').value;
+  if (!email) {
+    showToast('Please enter an email address');
+    return;
+  }
+  if (!buildQuery()) {
+    showToast('Please enter a search term first');
+    return;
+  }
+
+  const config = {
+    query: buildQuery(),
+    rssUrl: buildUrl(),
+    title: document.getElementById('digestTitle').value,
+    header: document.getElementById('digestHeader').value,
+    footer: document.getElementById('digestFooter').value,
+    email: email,
+    schedule: document.getElementById('digestSchedule').value,
+  };
+
+  // Store locally for now
+  localStorage.setItem('kirkham_feeds_digest', JSON.stringify(config));
+  showToast('Digest settings saved. Email delivery coming soon.');
+}
+
+// ============================================
+// UTILS
+// ============================================
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  selectedTerms = [];
+  customTerms = [];
+  excludeTerms = [];
+  renderExcludeChips();
+  showSuggestions();
+  updateUrl();
+});
+
+document.getElementById('langSelect').addEventListener('change', updateUrl);
+document.getElementById('countrySelect').addEventListener('change', updateUrl);
+document.getElementById('whenSelect').addEventListener('change', updateUrl);
+
+// Init
+updateUrl();
+</script>
+</body>
+</html>
