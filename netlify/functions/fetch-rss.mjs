@@ -18,6 +18,10 @@ export default async (req) => {
       },
     });
 
+    if (!response.ok) {
+      return new Response(`Upstream returned ${response.status}`, { status: response.status });
+    }
+
     const body = await response.text();
 
     return new Response(body, {
@@ -31,8 +35,4 @@ export default async (req) => {
   } catch (err) {
     return new Response('Failed to fetch RSS feed', { status: 502 });
   }
-};
-
-export const config = {
-  path: '/.netlify/functions/fetch-rss',
 };

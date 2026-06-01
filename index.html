@@ -861,12 +861,12 @@
 
   <!-- Email Digest Section -->
   <div class="digest-section">
-    <h2>Email digest</h2>
-    <p>Get your feed delivered as a formatted briefing. Customise the header and footer to match your brand.</p>
+    <h2>Email digest <span style="font-size:0.6em;font-weight:600;color:var(--orange);background:var(--orange-dim);padding:0.15em 0.6em;border-radius:100px;vertical-align:middle;letter-spacing:0.03em;">PREVIEW ONLY</span></h2>
+    <p>Design how your briefing will look. Automated delivery isn't live yet, your settings are saved in this browser so they're ready when it is.</p>
 
     <div class="tab-row">
-      <button class="tab-btn active" onclick="switchTab('configure')">Configure</button>
-      <button class="tab-btn" onclick="switchTab('preview-email')">Preview</button>
+      <button class="tab-btn active" data-tab="configure" onclick="switchTab('configure')">Configure</button>
+      <button class="tab-btn" data-tab="preview-email" onclick="switchTab('preview-email')">Preview</button>
     </div>
 
     <div class="tab-panel active" id="tab-configure">
@@ -999,6 +999,31 @@ let excludeTerms = [];
 let queryOperator = 'OR';
 let articles = [];
 let previewTimeout = null;
+
+// ============================================
+// SAFETY HELPERS
+// ============================================
+
+// Escape untrusted text before injecting into innerHTML.
+// RSS fields (title, source, snippet) come from Google News and are attacker-influenceable.
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Only allow http(s) links through; reject javascript:/data: etc. Returns '' if unsafe.
+function safeUrl(url) {
+  try {
+    const u = new URL(url, window.location.origin);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch {
+    return '';
+  }
+}
 
 // ============================================
 // CORE LOGIC
@@ -1308,18 +1333,22 @@ function renderPreview() {
   articles.slice(0, 15).forEach(a => {
     const ago = timeAgo(a.pubDate);
     const faviconUrl = a.sourceDomain
-      ? `https://www.google.com/s2/favicons?domain=${a.sourceDomain}&sz=32`
+      ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(a.sourceDomain)}&sz=32`
       : '';
+    const link = safeUrl(a.link);
+    const titleHtml = link
+      ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>`
+      : escapeHtml(a.title);
     html += `
       <div class="article">
-        ${faviconUrl ? `<div class="article-favicon"><img src="${faviconUrl}" alt="" loading="lazy"></div>` : ''}
+        ${faviconUrl ? `<div class="article-favicon"><img src="${escapeHtml(faviconUrl)}" alt="" loading="lazy"></div>` : ''}
         <div class="article-body">
           <div class="article-source-row">
-            ${a.source ? `<span class="article-source">${a.source}</span>` : ''}
-            ${ago ? `<span class="article-time">${ago}</span>` : ''}
+            ${a.source ? `<span class="article-source">${escapeHtml(a.source)}</span>` : ''}
+            ${ago ? `<span class="article-time">${escapeHtml(ago)}</span>` : ''}
           </div>
-          <div class="article-title"><a href="${a.link}" target="_blank" rel="noopener">${a.title}</a></div>
-          ${a.snippet ? `<div class="article-snippet">${a.snippet}</div>` : ''}
+          <div class="article-title">${titleHtml}</div>
+          ${a.snippet ? `<div class="article-snippet">${escapeHtml(a.snippet)}</div>` : ''}
         </div>
       </div>
     `;
@@ -1348,7 +1377,8 @@ function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
 
-  event.target.classList.add('active');
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if (btn) btn.classList.add('active');
   document.getElementById(`tab-${tabName}`).classList.add('active');
 
   if (tabName === 'preview-email') {
@@ -1369,11 +1399,11 @@ function renderEmailPreview() {
   let html = '';
 
   // Header
-  html += `<h2>${title}</h2>`;
-  html += `<div class="ep-date">${dateStr}</div>`;
+  html += `<h2>${escapeHtml(title)}</h2>`;
+  html += `<div class="ep-date">${escapeHtml(dateStr)}</div>`;
 
   if (header) {
-    html += `<div class="ep-header-custom">${header}</div>`;
+    html += `<div class="ep-header-custom">${escapeHtml(header)}</div>`;
   }
 
   // Articles
@@ -1383,16 +1413,16 @@ function renderEmailPreview() {
       const date = a.pubDate ? new Date(a.pubDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
       html += `
         <div class="ep-item">
-          <div class="ep-item-title">${i + 1}. ${a.title}</div>
-          ${date ? `<div class="ep-item-date">Date: ${date}</div>` : ''}
-          ${a.snippet ? `<div class="ep-item-snippet">${a.snippet}</div>` : ''}
-          ${a.source ? `<div class="ep-item-source">Source: ${a.source}</div>` : ''}
+          <div class="ep-item-title">${i + 1}. ${escapeHtml(a.title)}</div>
+          ${date ? `<div class="ep-item-date">Date: ${escapeHtml(date)}</div>` : ''}
+          ${a.snippet ? `<div class="ep-item-snippet">${escapeHtml(a.snippet)}</div>` : ''}
+          ${a.source ? `<div class="ep-item-source">Source: ${escapeHtml(a.source)}</div>` : ''}
         </div>
       `;
     });
   } else if (query) {
     html += `<div class="ep-section-header">Latest Coverage</div>`;
-    html += `<p style="color: #888; font-style: italic;">Articles matching "${query}" will appear here.</p>`;
+    html += `<p style="color: #888; font-style: italic;">Articles matching "${escapeHtml(query)}" will appear here.</p>`;
   } else {
     html += `<p style="color: #888; font-style: italic;">Set up your search terms above to see articles here.</p>`;
   }
@@ -1400,7 +1430,7 @@ function renderEmailPreview() {
   // Footer
   html += `<div class="ep-footer">`;
   if (footer) {
-    html += `<div class="ep-footer-custom">${footer}</div>`;
+    html += `<div class="ep-footer-custom">${escapeHtml(footer)}</div>`;
   } else {
     html += `Produced by Kirkham Feeds.`;
   }
