@@ -1508,17 +1508,22 @@ function renderPreview() {
     return;
   }
 
+  const PREVIEW_LIMIT = 30;
   const query = buildQuery();
   const gnSearchUrl = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-GB&gl=GB&ceid=GB:en`;
+
+  const shownLabel = articles.length > PREVIEW_LIMIT
+    ? `showing top ${PREVIEW_LIMIT} of ${articles.length}`
+    : `${articles.length} articles`;
 
   let html = `
     <div class="preview-header">
       <h3>Feed preview</h3>
-      <span class="preview-count">${articles.length} articles</span>
+      <span class="preview-count">${shownLabel}</span>
     </div>
   `;
 
-  articles.slice(0, 15).forEach(a => {
+  articles.slice(0, PREVIEW_LIMIT).forEach(a => {
     const ago = timeAgo(a.pubDate);
     const faviconUrl = a.sourceDomain
       ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(a.sourceDomain)}&sz=32`
@@ -1546,8 +1551,8 @@ function renderPreview() {
     `;
   });
 
-  if (articles.length > 15) {
-    html += `<div style="padding: 0.75rem 0; color: var(--text-muted); font-size: 0.8rem;">+ ${articles.length - 15} more articles in the full feed</div>`;
+  if (articles.length > PREVIEW_LIMIT) {
+    html += `<div style="padding: 0.75rem 0; color: var(--text-muted); font-size: 0.8rem;">+ ${articles.length - PREVIEW_LIMIT} more articles in the full feed</div>`;
   }
 
   // Google News link
