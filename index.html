@@ -5,32 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kirkham Feeds — Google News RSS Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0b;
-      --bg-card: #141416;
-      --bg-card-hover: #1a1a1e;
-      --bg-input: #1a1a1e;
-      --border: #2a2a2e;
-      --border-focus: #5b5bf0;
-      --text: #e8e8ec;
-      --text-muted: #8888a0;
-      --text-dim: #55556a;
-      --accent: #6c6cf0;
-      --accent-hover: #7e7ef8;
-      --accent-dim: rgba(108, 108, 240, 0.15);
-      --green: #34d399;
-      --green-dim: rgba(52, 211, 153, 0.15);
-      --orange: #fb923c;
-      --orange-dim: rgba(251, 146, 60, 0.15);
-      --red: #f87171;
-      --red-dim: rgba(248, 113, 113, 0.15);
-      --radius: 10px;
+      /* Editorial light theme — paper + ink with one confident accent.
+         Rationale: the users are comms/news/research professionals, not
+         developers, so the surface should read like a trustworthy newsroom
+         tool rather than a code editor. */
+      --bg: #fbfaf8;            /* warm paper, softer than pure white */
+      --bg-card: #ffffff;
+      --bg-card-hover: #f4f3ef;
+      --bg-input: #ffffff;
+      --bg-sunken: #f4f3ef;     /* boxes holding technical text (URL/query) */
+      --border: #e6e3dc;        /* warm hairline */
+      --border-strong: #d8d4ca;
+      --border-focus: #3538cd;
+      --text: #1b1b1f;          /* ink */
+      --text-muted: #5f5f6b;
+      --text-dim: #9a9aa4;
+      --accent: #3538cd;        /* editorial indigo-blue */
+      --accent-hover: #2a2cab;
+      --accent-dim: rgba(53, 56, 205, 0.08);
+      --green: #0f7a52;         /* "add" — darkened for contrast on paper */
+      --green-dim: rgba(15, 122, 82, 0.10);
+      --orange: #b4530a;        /* RSS-warm source labels */
+      --orange-dim: rgba(180, 83, 10, 0.10);
+      --red: #c0392b;           /* "exclude" */
+      --red-dim: rgba(192, 57, 43, 0.09);
+      --radius: 9px;
       --radius-sm: 6px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow: 0 1px 2px rgba(20,20,30,0.04), 0 1px 8px rgba(20,20,30,0.04);
+      --shadow-lift: 0 2px 4px rgba(20,20,30,0.06), 0 8px 24px rgba(20,20,30,0.07);
+      /* serif reserved for the masthead + editorial headings */
+      --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
     }
 
     body {
@@ -39,6 +49,19 @@
       color: var(--text);
       line-height: 1.6;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Visible keyboard focus everywhere — the dark build had none. */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap; border: 0;
     }
 
     .container {
@@ -47,21 +70,37 @@
       padding: 2rem 1.5rem 4rem;
     }
 
-    /* Header */
+    /* Header — newspaper masthead */
     .header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    .header .masthead-kicker {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
     }
     .header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin-bottom: 0.5rem;
+      font-family: var(--serif);
+      font-size: 2.9rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
+      margin-bottom: 0.6rem;
     }
-    .header h1 span { color: var(--accent); }
     .header p {
       color: var(--text-muted);
       font-size: 0.95rem;
+      max-width: 30rem;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      .header h1 { font-size: 2.2rem; }
     }
 
     /* Cards */
@@ -71,6 +110,7 @@
       border-radius: var(--radius);
       padding: 1.5rem;
       margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
     }
     .card-label {
       font-size: 0.7rem;
@@ -79,6 +119,18 @@
       letter-spacing: 0.08em;
       color: var(--text-muted);
       margin-bottom: 0.75rem;
+    }
+    /* small reusable badge (was inline styles on the digest heading) */
+    .badge {
+      font-size: 0.6em;
+      font-weight: 600;
+      color: var(--orange);
+      background: var(--orange-dim);
+      padding: 0.2em 0.6em;
+      border-radius: 100px;
+      vertical-align: middle;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
 
     /* Search input */
@@ -272,7 +324,7 @@
     .query-preview {
       margin-top: 0.75rem;
       padding: 0.6rem 0.85rem;
-      background: var(--bg);
+      background: var(--bg-sunken);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       font-family: 'JetBrains Mono', monospace;
@@ -346,7 +398,7 @@
       color: var(--text-muted);
       margin-bottom: 0.35rem;
     }
-    .param-group select {
+    .param-group select, .styled-select {
       width: 100%;
       padding: 0.6rem 0.75rem;
       background: var(--bg-input);
@@ -358,11 +410,11 @@
       outline: none;
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888a0' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a9aa4' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
     }
-    .param-group select:focus {
+    .param-group select:focus, .styled-select:focus {
       border-color: var(--border-focus);
     }
 
@@ -371,11 +423,13 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
     .url-box {
       flex: 1;
+      min-width: 0;
       padding: 0.7rem 0.85rem;
-      background: var(--bg);
+      background: var(--bg-sunken);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       font-family: 'JetBrains Mono', monospace;
@@ -435,7 +489,8 @@
       margin-bottom: 1rem;
     }
     .preview-header h3 {
-      font-size: 0.95rem;
+      font-family: var(--serif);
+      font-size: 1.25rem;
       font-weight: 600;
     }
     .preview-count {
@@ -475,20 +530,34 @@
     }
     .article:last-child { border-bottom: none; }
     .article-favicon {
+      position: relative;
       flex-shrink: 0;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: var(--bg-input);
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-top: 2px;
+      overflow: hidden;
+    }
+    .article-favicon .favicon-letter {
+      font-family: var(--serif);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      line-height: 1;
     }
     .article-favicon img {
+      position: absolute;
+      inset: 0;
+      margin: auto;
       width: 18px;
       height: 18px;
-      border-radius: 2px;
+      border-radius: 3px;
+      background: #fff;
     }
     .article-body { flex: 1; min-width: 0; }
     .article-source-row {
@@ -509,10 +578,11 @@
       color: var(--text-dim);
     }
     .article-title {
-      font-size: 0.92rem;
+      font-family: var(--serif);
+      font-size: 1.08rem;
       font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 0.3rem;
+      line-height: 1.32;
+      margin-bottom: 0.35rem;
     }
     .article-title a {
       color: var(--text);
@@ -553,9 +623,10 @@
       margin-top: 2rem;
     }
     .digest-section h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-family: var(--serif);
+      font-size: 1.65rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       margin-bottom: 0.5rem;
     }
     .digest-section > p {
@@ -608,6 +679,7 @@
     /* Email preview */
     .email-preview {
       background: #fff;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 2rem;
       color: #1a1a2e;
@@ -617,8 +689,10 @@
       overflow-y: auto;
     }
     .email-preview h2 {
+      font-family: var(--serif);
       color: #1a1a2e;
-      font-size: 1.1rem;
+      font-size: 1.4rem;
+      font-weight: 600;
       margin-bottom: 0.25rem;
     }
     .email-preview .ep-date {
@@ -710,12 +784,13 @@
       bottom: 2rem;
       left: 50%;
       transform: translateX(-50%) translateY(1rem);
-      background: var(--green);
-      color: #000;
+      background: #1b1b1f;
+      color: #fff;
       padding: 0.65rem 1.25rem;
       border-radius: 100px;
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 500;
+      box-shadow: var(--shadow-lift);
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
@@ -725,25 +800,69 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* Narrow phones: reclaim horizontal space */
+    @media (max-width: 420px) {
+      .container { padding: 1.25rem 1rem 3rem; }
+      .card { padding: 1.15rem; }
+      .url-output .btn { flex: 1; }
+    }
+
+    /* Inline "add term" input (replaces native prompt dialogs) */
+    .inline-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+    .inline-add input {
+      padding: 0.4rem 0.7rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      width: 13rem;
+      max-width: 60vw;
+    }
+    .inline-add input:focus { border-color: var(--border-focus); }
+    .inline-add .inline-add-go {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 100px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .inline-add .inline-add-go:hover { background: var(--accent-hover); }
   </style>
 </head>
 <body>
 
 <div class="container">
   <!-- Header -->
-  <div class="header">
-    <h1><span>Kirkham Feeds</span></h1>
-    <p>Build Google News RSS feeds with AND/OR logic. Get email digests. No account needed.</p>
-  </div>
+  <header class="header">
+    <div class="masthead-kicker">News monitoring</div>
+    <h1>Kirkham Feeds</h1>
+    <p>Build a Google News RSS feed with AND/OR logic, preview it live, and shape it into an email briefing. No account needed.</p>
+  </header>
 
   <!-- Step 1: Search -->
   <div class="card">
-    <div class="card-label">1. What do you want to track?</div>
+    <label class="card-label" for="searchInput">1. What do you want to track?</label>
     <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="e.g. Arsenal, artificial intelligence, Tesla..." autofocus>
+      <input type="text" id="searchInput" placeholder="e.g. Arsenal, artificial intelligence, Tesla..." aria-label="Search term">
       <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
     </div>
     <div class="suggestions" id="suggestions"></div>
+    <div class="inline-add" id="customAddRow" style="display:none;">
+      <input type="text" id="customAddInput" placeholder="Add a search variation…" aria-label="Custom search variation">
+      <button type="button" class="inline-add-go" onclick="commitCustomTerm()">Add</button>
+    </div>
 
     <!-- Query operator controls (visible when terms are added) -->
     <div class="query-controls" id="queryControls">
@@ -756,6 +875,10 @@
         <button class="exclude-btn" onclick="addExcludeTerm()">&#8722; Exclude term</button>
       </div>
       <div class="exclude-chips" id="excludeChips"></div>
+      <div class="inline-add" id="excludeAddRow" style="display:none;">
+        <input type="text" id="excludeAddInput" placeholder="Exclude articles mentioning…" aria-label="Term to exclude">
+        <button type="button" class="inline-add-go" onclick="commitExcludeTerm()">Exclude</button>
+      </div>
 
       <!-- Query preview -->
       <div class="query-preview" id="queryPreview">
@@ -783,7 +906,7 @@
     <div class="card-label">2. Refine</div>
     <div class="params-grid">
       <div class="param-group">
-        <label>Language</label>
+        <label for="langSelect">Language</label>
         <select id="langSelect">
           <option value="en-GB" selected>English (UK)</option>
           <option value="en-US">English (US)</option>
@@ -804,7 +927,7 @@
         </select>
       </div>
       <div class="param-group">
-        <label>Country</label>
+        <label for="countrySelect">Country</label>
         <select id="countrySelect">
           <option value="GB" selected>United Kingdom</option>
           <option value="US">United States</option>
@@ -826,7 +949,7 @@
         </select>
       </div>
       <div class="param-group">
-        <label>Time window</label>
+        <label for="whenSelect">Time window</label>
         <select id="whenSelect">
           <option value="">All time</option>
           <option value="1h">Last hour</option>
@@ -861,39 +984,39 @@
 
   <!-- Email Digest Section -->
   <div class="digest-section">
-    <h2>Email digest <span style="font-size:0.6em;font-weight:600;color:var(--orange);background:var(--orange-dim);padding:0.15em 0.6em;border-radius:100px;vertical-align:middle;letter-spacing:0.03em;">PREVIEW ONLY</span></h2>
+    <h2>Email digest <span class="badge">Preview only</span></h2>
     <p>Design how your briefing will look. Automated delivery isn't live yet, your settings are saved in this browser so they're ready when it is.</p>
 
-    <div class="tab-row">
-      <button class="tab-btn active" data-tab="configure" onclick="switchTab('configure')">Configure</button>
-      <button class="tab-btn" data-tab="preview-email" onclick="switchTab('preview-email')">Preview</button>
+    <div class="tab-row" role="tablist" aria-label="Email digest views">
+      <button class="tab-btn active" id="tab-btn-configure" role="tab" aria-selected="true" aria-controls="tab-configure" data-tab="configure" onclick="switchTab('configure')">Configure</button>
+      <button class="tab-btn" id="tab-btn-preview-email" role="tab" aria-selected="false" aria-controls="tab-preview-email" data-tab="preview-email" onclick="switchTab('preview-email')">Preview</button>
     </div>
 
-    <div class="tab-panel active" id="tab-configure">
+    <div class="tab-panel active" id="tab-configure" role="tabpanel" aria-labelledby="tab-btn-configure">
       <div class="card" style="margin-bottom: 0.75rem;">
-        <div class="card-label">Briefing title</div>
+        <label class="card-label" for="digestTitle">Briefing title</label>
         <input type="text" id="digestTitle" placeholder="e.g. AI & Financial Services Daily Briefing" value="">
       </div>
 
       <div class="digest-grid">
         <div class="card">
-          <div class="card-label">Header (top)</div>
+          <label class="card-label" for="digestHeader">Header (top)</label>
           <textarea id="digestHeader" placeholder="Custom intro text that appears at the top of each email..."></textarea>
         </div>
         <div class="card">
-          <div class="card-label">Footer (tail)</div>
+          <label class="card-label" for="digestFooter">Footer (tail)</label>
           <textarea id="digestFooter" placeholder="e.g. Produced by Your Company.&#10;For internal use only."></textarea>
         </div>
       </div>
 
       <div class="digest-grid" style="margin-top: 0.75rem;">
         <div class="card">
-          <div class="card-label">Deliver to</div>
+          <label class="card-label" for="digestEmail">Deliver to</label>
           <input type="email" id="digestEmail" placeholder="you@example.com">
         </div>
         <div class="card">
-          <div class="card-label">Schedule</div>
-          <select id="digestSchedule" style="width:100%;padding:0.6rem 0.75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;font-family:inherit;outline:none;cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888a0' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 0.75rem center;">
+          <label class="card-label" for="digestSchedule">Schedule</label>
+          <select id="digestSchedule" class="styled-select">
             <option value="daily-morning">Daily at 7am</option>
             <option value="daily-evening">Daily at 6pm</option>
             <option value="weekly-monday">Weekly (Monday morning)</option>
@@ -907,7 +1030,7 @@
       </div>
     </div>
 
-    <div class="tab-panel" id="tab-preview-email">
+    <div class="tab-panel" id="tab-preview-email" role="tabpanel" aria-labelledby="tab-btn-preview-email">
       <div class="card">
         <div class="email-preview" id="emailPreview">
           <p style="color: #888; text-align: center;">Configure your digest above, then switch to Preview to see how it'll look.</p>
@@ -1152,10 +1275,11 @@ function showSuggestions() {
   // Find matching suggestions
   let matches = SUGGESTIONS[term] || [];
 
-  // Also try partial matches
-  if (matches.length === 0) {
+  // Also try partial matches — require >=3 chars and a prefix match so short
+  // keys like "ai" don't fire inside unrelated words ("email").
+  if (matches.length === 0 && term.length >= 3) {
     for (const [key, vals] of Object.entries(SUGGESTIONS)) {
-      if (key.includes(term) || term.includes(key)) {
+      if (key.startsWith(term) || term.startsWith(key)) {
         matches = vals;
         break;
       }
@@ -1165,9 +1289,11 @@ function showSuggestions() {
   if (matches.length === 0) return;
 
   matches.forEach(suggestion => {
+    const isSel = selectedTerms.includes(suggestion);
     const chip = document.createElement('button');
-    chip.className = 'chip' + (selectedTerms.includes(suggestion) ? ' selected' : '');
-    chip.textContent = selectedTerms.includes(suggestion) ? suggestion + ' ×' : '+ ' + suggestion;
+    chip.className = 'chip' + (isSel ? ' selected' : '');
+    chip.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+    chip.textContent = isSel ? suggestion + ' ×' : '+ ' + suggestion;
     chip.onclick = () => toggleTerm(suggestion);
     container.appendChild(chip);
   });
@@ -1192,21 +1318,41 @@ function toggleTerm(term) {
 }
 
 function addCustomTerm() {
-  const term = prompt('Add a custom search variation:');
-  if (term && term.trim()) {
-    customTerms.push(term.trim());
-    showSuggestions();
+  const row = document.getElementById('customAddRow');
+  row.style.display = 'inline-flex';
+  const input = document.getElementById('customAddInput');
+  input.value = '';
+  input.focus();
+}
+
+function commitCustomTerm() {
+  const input = document.getElementById('customAddInput');
+  const term = input.value.trim();
+  if (term) {
+    customTerms.push(term);
     updateUrl();
   }
+  document.getElementById('customAddRow').style.display = 'none';
+  showSuggestions();
 }
 
 function addExcludeTerm() {
-  const term = prompt('Exclude articles mentioning:');
-  if (term && term.trim()) {
-    excludeTerms.push(term.trim());
+  const row = document.getElementById('excludeAddRow');
+  row.style.display = 'inline-flex';
+  const input = document.getElementById('excludeAddInput');
+  input.value = '';
+  input.focus();
+}
+
+function commitExcludeTerm() {
+  const input = document.getElementById('excludeAddInput');
+  const term = input.value.trim();
+  if (term) {
+    excludeTerms.push(term);
     renderExcludeChips();
     updateUrl();
   }
+  document.getElementById('excludeAddRow').style.display = 'none';
 }
 
 function removeExcludeTerm(idx) {
@@ -1231,9 +1377,30 @@ function copyUrl() {
   const url = buildUrl();
   if (!url) return;
 
-  navigator.clipboard.writeText(url).then(() => {
+  const done = () => {
     showToast('RSS URL copied to clipboard');
-  });
+    const msg = document.getElementById('copiedMsg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 1800);
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+  } else {
+    fallbackCopy(url, done);
+  }
+}
+
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); }
+  catch { showToast('Press Cmd/Ctrl+C to copy'); }
+  document.body.removeChild(ta);
 }
 
 // ============================================
@@ -1293,7 +1460,7 @@ async function fetchPreview(url) {
     renderPreview();
 
   } catch (err) {
-    previewArea.innerHTML = `<div class="preview-empty">Couldn't load preview. The RSS URL is still valid -- paste it into your reader.</div>`;
+    previewArea.innerHTML = `<div class="preview-empty">Couldn't load a live preview, but your RSS URL is still valid. Paste it into your reader.</div>`;
   }
 }
 
@@ -1339,9 +1506,13 @@ function renderPreview() {
     const titleHtml = link
       ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>`
       : escapeHtml(a.title);
+    const initial = escapeHtml((a.source || a.sourceDomain || '?').trim().charAt(0).toUpperCase() || '?');
     html += `
       <div class="article">
-        ${faviconUrl ? `<div class="article-favicon"><img src="${escapeHtml(faviconUrl)}" alt="" loading="lazy"></div>` : ''}
+        <div class="article-favicon">
+          <span class="favicon-letter">${initial}</span>
+          ${faviconUrl ? `<img src="${escapeHtml(faviconUrl)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        </div>
         <div class="article-body">
           <div class="article-source-row">
             ${a.source ? `<span class="article-source">${escapeHtml(a.source)}</span>` : ''}
@@ -1374,11 +1545,12 @@ function renderPreview() {
 // ============================================
 
 function switchTab(tabName) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const on = btn.dataset.tab === tabName;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-
-  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-  if (btn) btn.classList.add('active');
   document.getElementById(`tab-${tabName}`).classList.add('active');
 
   if (tabName === 'preview-email') {
@@ -1484,10 +1656,23 @@ document.getElementById('searchInput').addEventListener('input', () => {
   selectedTerms = [];
   customTerms = [];
   excludeTerms = [];
+  articles = [];
+  document.getElementById('customAddRow').style.display = 'none';
+  document.getElementById('excludeAddRow').style.display = 'none';
   renderExcludeChips();
   showSuggestions();
   updateUrl();
 });
+
+// Inline add inputs: Enter commits, Escape cancels
+function wireInlineAdd(inputId, rowId, commit) {
+  document.getElementById(inputId).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    else if (e.key === 'Escape') { document.getElementById(rowId).style.display = 'none'; }
+  });
+}
+wireInlineAdd('customAddInput', 'customAddRow', commitCustomTerm);
+wireInlineAdd('excludeAddInput', 'excludeAddRow', commitExcludeTerm);
 
 document.getElementById('langSelect').addEventListener('change', updateUrl);
 document.getElementById('countrySelect').addEventListener('change', updateUrl);
@@ -1495,6 +1680,12 @@ document.getElementById('whenSelect').addEventListener('change', updateUrl);
 
 // Init
 updateUrl();
+
+// Focus the search box on load, but only on wider screens so mobile
+// doesn't get an unsolicited keyboard pop.
+if (window.matchMedia('(min-width: 700px)').matches) {
+  document.getElementById('searchInput').focus();
+}
 </script>
 </body>
 </html>
