@@ -242,7 +242,7 @@
       color: var(--text);
     }
 
-    /* Query operator controls */
+    /* Conditions builder (replaces the old AND/OR toggle + syntax cheatsheet) */
     .query-controls {
       margin-top: 1rem;
       padding-top: 0.85rem;
@@ -251,136 +251,144 @@
     }
     .query-controls.visible { display: block; }
 
-    .controls-row {
+    /* Live plain-English summary */
+    .summary-sentence {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .summary-sentence .s-term { font-weight: 600; color: var(--accent); }
+    .summary-sentence .s-phrase { font-weight: 600; color: var(--text); }
+    .summary-sentence .s-site { font-weight: 600; color: var(--orange); }
+    .summary-sentence .s-not { font-weight: 600; color: var(--red); }
+    .summary-sentence .s-join { color: var(--text-muted); }
+
+    /* Condition rows */
+    .cond-row {
+      margin-bottom: 0.75rem;
+      padding: 0.75rem 0.85rem;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .cond-head {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.5rem;
     }
-    .controls-label {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .op-btn-group {
-      display: inline-flex;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    .op-btn {
-      padding: 0.35rem 0.85rem;
-      background: var(--bg-input);
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.78rem;
+    .cond-label {
+      font-size: 0.7rem;
       font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .cond-label .cond-hint {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
+    .cond-remove {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      line-height: 1;
       cursor: pointer;
-      transition: all 0.15s;
-      letter-spacing: 0.03em;
+      padding: 0.1rem 0.3rem;
     }
-    .op-btn:not(:last-child) {
-      border-right: 1px solid var(--border);
-    }
-    .op-btn:hover {
-      background: var(--bg-card-hover);
-      color: var(--text);
-    }
-    .op-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .exclude-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.35rem 0.7rem;
-      background: transparent;
-      border: 1px dashed var(--red);
-      border-radius: 100px;
-      font-size: 0.75rem;
-      color: var(--red);
-      cursor: pointer;
-      transition: all 0.15s;
-      opacity: 0.7;
-    }
-    .exclude-btn:hover {
-      opacity: 1;
-      background: var(--red-dim);
-    }
-
-    .exclude-chips {
+    .cond-remove:hover { color: var(--red); }
+    .cond-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 0.4rem;
-      margin-top: 0.5rem;
+      margin-top: 0.55rem;
     }
-    .exclude-chips:empty { margin-top: 0; }
+    .cond-chips:empty { margin-top: 0; }
 
-    /* Query preview */
+    /* Chip colour variants reused across condition rows */
+    .chip-site { background: var(--orange-dim); color: var(--orange); }
+    .chip-site:hover { background: var(--orange); color: #fff; }
+    .chip-phrase { background: var(--accent-dim); color: var(--accent); }
+    .chip-phrase:hover { background: var(--accent); color: #fff; }
+
+    /* "+ Add a condition" control */
+    .add-condition { margin-top: 0.25rem; }
+    .add-cond-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.9rem;
+      background: transparent;
+      border: 1px dashed var(--border-strong);
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .add-cond-toggle:hover { border-color: var(--text-muted); color: var(--text); }
+    .add-cond-palette {
+      display: none;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+    .add-cond-palette.open { display: flex; }
+    .add-cond-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .add-cond-opt:hover { border-color: var(--accent); color: var(--accent); }
+    .add-cond-opt[disabled] { opacity: 0.4; cursor: default; }
+    .add-cond-opt[disabled]:hover { border-color: var(--border); color: var(--text); }
+
+    /* "Show query" toggle — keeps the technical string available but tucked away */
     .query-preview {
-      margin-top: 0.75rem;
+      margin-top: 1rem;
+      font-size: 0.78rem;
+    }
+    .query-preview summary {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 500;
+      user-select: none;
+      list-style: none;
+    }
+    .query-preview summary::-webkit-details-marker { display: none; }
+    .query-preview summary::before { content: '⌄ '; color: var(--text-dim); }
+    .query-preview[open] summary::before { content: '⌃ '; }
+    .query-preview summary:hover { color: var(--text); }
+    .query-preview .qp-body {
+      margin-top: 0.5rem;
       padding: 0.6rem 0.85rem;
       background: var(--bg-sunken);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
       color: var(--text-muted);
-      display: none;
-    }
-    .query-preview.visible { display: block; }
-    .query-preview .qp-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-dim);
-      margin-bottom: 0.3rem;
-    }
-    .query-preview .qp-query {
-      color: var(--orange);
-      word-break: break-all;
-    }
-    .query-preview .qp-query .qp-op {
-      color: var(--accent);
-      font-weight: 600;
-    }
-    .query-preview .qp-query .qp-not {
-      color: var(--red);
-      font-weight: 600;
-    }
-
-    /* Syntax hint */
-    .syntax-hint {
-      margin-top: 0.6rem;
-      font-size: 0.72rem;
-      color: var(--text-dim);
+      word-break: break-word;
       line-height: 1.5;
     }
-    .syntax-hint summary {
-      cursor: pointer;
-      color: var(--text-muted);
-      font-weight: 500;
-      user-select: none;
-    }
-    .syntax-hint summary:hover { color: var(--text); }
-    .syntax-hint .hint-grid {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 0.25rem 0.75rem;
-      margin-top: 0.5rem;
-      padding: 0.5rem 0;
-    }
-    .syntax-hint code {
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--orange);
-      font-size: 0.72rem;
-    }
+    .query-preview .qp-query { color: var(--orange); }
+    .query-preview .qp-query .qp-op { color: var(--accent); font-weight: 600; }
+    .query-preview .qp-query .qp-not { color: var(--red); font-weight: 600; }
 
     /* Parameters grid */
     .params-grid {
@@ -848,7 +856,7 @@
   <header class="header">
     <div class="masthead-kicker">News monitoring</div>
     <h1>Kirkham Feeds</h1>
-    <p>Build a Google News RSS feed with AND/OR logic, preview it live, and shape it into an email briefing. No account needed.</p>
+    <p>Build a Google News RSS feed in plain English, preview it live, and copy it into any reader. No account needed.</p>
   </header>
 
   <!-- Step 1: Search -->
@@ -864,38 +872,82 @@
       <button type="button" class="inline-add-go" onclick="commitCustomTerm()">Add</button>
     </div>
 
-    <!-- Query operator controls (visible when terms are added) -->
+    <!-- Conditions builder (visible once there's something to track) -->
     <div class="query-controls" id="queryControls">
-      <div class="controls-row">
-        <span class="controls-label">Combine terms with:</span>
-        <div class="op-btn-group">
-          <button class="op-btn" data-op="AND" onclick="setOperator('AND')">AND</button>
-          <button class="op-btn active" data-op="OR" onclick="setOperator('OR')">OR</button>
+      <!-- Live plain-English summary of the feed being built -->
+      <p class="summary-sentence" id="summarySentence"></p>
+
+      <!-- Condition rows, each revealed from the "+ Add a condition" palette -->
+      <div id="conditions">
+        <!-- Must also mention (extra AND-group) -->
+        <div class="cond-row" id="cond-also" data-cond="also" style="display:none;">
+          <div class="cond-head">
+            <span class="cond-label">Must also mention <span class="cond-hint">— narrows the feed (AND)</span></span>
+            <button type="button" class="cond-remove" aria-label="Remove this condition" onclick="removeCondition('also')">×</button>
+          </div>
+          <div class="cond-chips" id="alsoChips"></div>
+          <div class="inline-add" id="alsoAddRow" style="display:none;">
+            <input type="text" id="alsoAddInput" placeholder="Add a word it must also mention…" aria-label="Word the article must also mention">
+            <button type="button" class="inline-add-go" onclick="commitAlsoTerm()">Add</button>
+          </div>
         </div>
-        <button class="exclude-btn" onclick="addExcludeTerm()">&#8722; Exclude term</button>
-      </div>
-      <div class="exclude-chips" id="excludeChips"></div>
-      <div class="inline-add" id="excludeAddRow" style="display:none;">
-        <input type="text" id="excludeAddInput" placeholder="Exclude articles mentioning…" aria-label="Term to exclude">
-        <button type="button" class="inline-add-go" onclick="commitExcludeTerm()">Exclude</button>
+
+        <!-- Exact phrase -->
+        <div class="cond-row" id="cond-phrase" data-cond="phrase" style="display:none;">
+          <div class="cond-head">
+            <span class="cond-label">Exact phrase <span class="cond-hint">— must appear word-for-word</span></span>
+            <button type="button" class="cond-remove" aria-label="Remove this condition" onclick="removeCondition('phrase')">×</button>
+          </div>
+          <div class="cond-chips" id="phraseChips"></div>
+          <div class="inline-add" id="phraseAddRow" style="display:none;">
+            <input type="text" id="phraseAddInput" placeholder="e.g. Mikel Arteta" aria-label="Exact phrase">
+            <button type="button" class="inline-add-go" onclick="commitPhraseTerm()">Add</button>
+          </div>
+        </div>
+
+        <!-- Exclude -->
+        <div class="cond-row" id="cond-exclude" data-cond="exclude" style="display:none;">
+          <div class="cond-head">
+            <span class="cond-label">Exclude <span class="cond-hint">— hide articles mentioning these</span></span>
+            <button type="button" class="cond-remove" aria-label="Remove this condition" onclick="removeCondition('exclude')">×</button>
+          </div>
+          <div class="cond-chips" id="excludeChips"></div>
+          <div class="inline-add" id="excludeAddRow" style="display:none;">
+            <input type="text" id="excludeAddInput" placeholder="Exclude articles mentioning…" aria-label="Term to exclude">
+            <button type="button" class="inline-add-go" onclick="commitExcludeTerm()">Exclude</button>
+          </div>
+        </div>
+
+        <!-- Only from these sites -->
+        <div class="cond-row" id="cond-sites" data-cond="sites" style="display:none;">
+          <div class="cond-head">
+            <span class="cond-label">Only from these sites <span class="cond-hint">— limit to chosen publishers</span></span>
+            <button type="button" class="cond-remove" aria-label="Remove this condition" onclick="removeCondition('sites')">×</button>
+          </div>
+          <div class="cond-chips" id="siteChips"></div>
+          <div class="inline-add" id="siteAddRow" style="display:none;">
+            <input type="text" id="siteAddInput" placeholder="e.g. bbc.co.uk" aria-label="Site domain">
+            <button type="button" class="inline-add-go" onclick="commitSiteTerm()">Add</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Query preview -->
-      <div class="query-preview" id="queryPreview">
-        <div class="qp-label">Query sent to Google News</div>
-        <div class="qp-query" id="queryPreviewText"></div>
+      <!-- "+ Add a condition" control -->
+      <div class="add-condition">
+        <button type="button" class="add-cond-toggle" id="addCondToggle" onclick="toggleCondPalette()">+ Add a condition</button>
+        <div class="add-cond-palette" id="addCondPalette">
+          <button type="button" class="add-cond-opt" data-target="also" onclick="openCondition('also')">+ Must also mention</button>
+          <button type="button" class="add-cond-opt" data-target="phrase" onclick="openCondition('phrase')">+ Exact phrase</button>
+          <button type="button" class="add-cond-opt" data-target="exclude" onclick="openCondition('exclude')">− Exclude</button>
+          <button type="button" class="add-cond-opt" data-target="sites" onclick="openCondition('sites')">+ Only from these sites</button>
+        </div>
       </div>
 
-      <!-- Syntax hint -->
-      <details class="syntax-hint">
-        <summary>Google News query syntax</summary>
-        <div class="hint-grid">
-          <code>Arsenal Tesla</code><span>AND — both must appear (spaces = AND)</span>
-          <code>Arsenal OR Chelsea</code><span>OR — either term matches</span>
-          <code>-Chelsea</code><span>NOT — exclude articles mentioning this</span>
-          <code>"Mikel Arteta"</code><span>Exact phrase (auto-quoted for multi-word terms)</span>
-          <code>site:bbc.co.uk</code><span>Only from a specific source</span>
-          <code>when:7d</code><span>Time filter (1h, 1d, 7d, 30d)</span>
+      <!-- Technical query string, tucked behind a toggle -->
+      <details class="query-preview" id="queryPreview">
+        <summary>Show query</summary>
+        <div class="qp-body">
+          <span class="qp-query" id="queryPreviewText"></span>
         </div>
       </details>
     </div>
@@ -1061,10 +1113,19 @@ const SUGGESTIONS = {
 // ============================================
 // STATE
 // ============================================
-let selectedTerms = [];
-let customTerms = [];
+// Query model:
+//   include = an array of OR-groups that are AND-ed together.
+//     group[0] is the main "track" box (searchInput + suggestion chips + custom variations).
+//     andGroups holds the extra "Must also mention" OR-groups (one for now, modelled for many).
+//   phraseTerms = exact phrases (each always quoted, AND-ed).
+//   excludeTerms = terms to exclude (-term).
+//   siteTerms = publisher domains (compiled to one site: OR-group).
+let selectedTerms = [];   // suggestion chips feeding group[0]
+let customTerms = [];     // custom variations feeding group[0]
+let andGroups = [];       // extra AND-ed OR-groups; andGroups[0] = "Must also mention"
+let phraseTerms = [];
 let excludeTerms = [];
-let queryOperator = 'OR';
+let siteTerms = [];
 let articles = [];
 let previewTimeout = null;
 
@@ -1101,41 +1162,76 @@ function getSearchTerm() {
   return document.getElementById('searchInput').value.trim();
 }
 
-function buildQuery() {
+// Auto-quote multi-word terms so Google News treats them as a phrase.
+function quoteTerm(t) {
+  t = String(t).trim();
+  return /\s/.test(t) ? `"${t.replace(/"/g, '')}"` : t;
+}
+
+// Compile one OR-group of terms into a query fragment.
+//   []        -> ''
+//   [a]       -> a            (no needless parens)
+//   [a, b]    -> (a OR b)     (parens verified to work through the GN RSS proxy)
+function compileGroup(terms) {
+  const parts = terms.map(quoteTerm).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0];
+  return '(' + parts.join(' OR ') + ')';
+}
+
+// The main "track" OR-group (group[0]): box text + suggestion chips + custom variations, de-duped.
+function trackGroupTerms() {
+  const terms = [];
+  const seen = new Set();
+  const push = (raw) => {
+    const t = String(raw).trim();
+    const key = t.toLowerCase();
+    if (!t || seen.has(key)) return;
+    seen.add(key);
+    terms.push(t);
+  };
   const base = getSearchTerm();
-  if (!base && selectedTerms.length === 0 && customTerms.length === 0) return '';
+  if (base) push(base);
+  selectedTerms.forEach(push);
+  customTerms.forEach(push);
+  return terms;
+}
 
-  const allTerms = [];
-  if (base) allTerms.push(base.includes(' ') ? `"${base}"` : base);
+// The full include model: array of non-empty OR-groups, AND-ed together. group[0] is the track box.
+function includeGroups() {
+  const groups = [trackGroupTerms()];
+  andGroups.forEach(g => groups.push(g.slice()));
+  return groups.filter(g => g.length);
+}
 
-  selectedTerms.forEach(t => {
-    if (t.toLowerCase() !== base.toLowerCase()) {
-      allTerms.push(t.includes(' ') ? `"${t}"` : t);
-    }
+function buildQuery() {
+  const fragments = [];
+
+  // 1. Include OR-groups, AND-ed together (joined by spaces = AND).
+  includeGroups().forEach(g => {
+    const frag = compileGroup(g);
+    if (frag) fragments.push(frag);
   });
 
-  customTerms.forEach(t => {
-    if (t.toLowerCase() !== base.toLowerCase()) {
-      allTerms.push(t.includes(' ') ? `"${t}"` : t);
-    }
+  // 2. Exact phrases — each always quoted, AND-ed.
+  phraseTerms.forEach(p => {
+    const t = String(p).trim().replace(/"/g, '');
+    if (t) fragments.push(`"${t}"`);
   });
 
-  let query;
-  if (allTerms.length <= 1) {
-    query = allTerms[0] || '';
-  } else if (queryOperator === 'AND') {
-    // Spaces = implicit AND in Google News
-    query = allTerms.join(' ');
-  } else {
-    query = allTerms.join(' OR ');
+  // 3. Site restriction — one OR-group of site: filters.
+  if (siteTerms.length) {
+    const siteFrag = compileGroup(siteTerms.map(s => 'site:' + s));
+    if (siteFrag) fragments.push(siteFrag);
   }
 
-  // Add exclusions
+  // 4. Exclusions last (-term).
   excludeTerms.forEach(t => {
-    query += ' -' + (t.includes(' ') ? `"${t}"` : t);
+    const term = String(t).trim();
+    if (term) fragments.push('-' + quoteTerm(term));
   });
 
-  return query;
+  return fragments.join(' ').trim();
 }
 
 function buildUrl() {
@@ -1166,11 +1262,12 @@ function updateUrl() {
     urlBox.style.color = 'var(--accent)';
   }
 
-  // Update query controls visibility
-  const hasTerms = selectedTerms.length > 0 || customTerms.length > 0;
-  document.getElementById('queryControls').classList.toggle('visible', hasTerms);
+  // Show the conditions builder once there's a track term or any condition in play.
+  const hasContent = getSearchTerm() !== '' || buildQuery() !== '';
+  document.getElementById('queryControls').classList.toggle('visible', hasContent);
 
-  // Update query preview
+  // Keep the plain-English summary and the technical query string in sync.
+  updateSummary();
   updateQueryPreview();
 
   // Debounced preview
@@ -1184,29 +1281,183 @@ function updateUrl() {
 
 function updateQueryPreview() {
   const query = buildQuery();
-  const previewEl = document.getElementById('queryPreview');
   const previewText = document.getElementById('queryPreviewText');
+  if (!query) { previewText.textContent = '—'; return; }
 
-  if (!query || (selectedTerms.length === 0 && customTerms.length === 0 && excludeTerms.length === 0)) {
-    previewEl.classList.remove('visible');
-    return;
-  }
-
-  previewEl.classList.add('visible');
-
-  // Syntax-highlight the query
-  let highlighted = query
+  // Highlight OR operators and -exclusions (escape first; RSS-safe and self-input-safe).
+  const highlighted = escapeHtml(query)
     .replace(/\bOR\b/g, '<span class="qp-op">OR</span>')
-    .replace(/\s-("?)([^"\s]+)\1/g, ' <span class="qp-not">-$1$2$1</span>');
-
+    .replace(/(^|\s)(-(?:&quot;[^&]*&quot;|[^\s]+))/g, '$1<span class="qp-not">$2</span>');
   previewText.innerHTML = highlighted;
 }
 
-function setOperator(op) {
-  queryOperator = op;
-  document.querySelectorAll('.op-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.op === op);
+// ============================================
+// PLAIN-ENGLISH SUMMARY
+// ============================================
+
+function summaryTerms(terms, cls, joiner) {
+  return terms
+    .map(t => `<span class="${cls}">${escapeHtml(t)}</span>`)
+    .join(`<span class="s-join">${joiner}</span>`);
+}
+
+function updateSummary() {
+  const el = document.getElementById('summarySentence');
+
+  const groups = includeGroups();
+  const hasAny = groups.length || phraseTerms.length || excludeTerms.length || siteTerms.length;
+  if (!hasAny) {
+    el.innerHTML = '<span class="s-join">Type what you want to track above, then add conditions to shape the feed.</span>';
+    return;
+  }
+
+  const parts = [];
+  if (groups.length) {
+    parts.push('Showing articles that mention ' + summaryTerms(groups[0], 's-term', ' or '));
+    for (let i = 1; i < groups.length; i++) {
+      parts.push('and also mention ' + summaryTerms(groups[i], 's-term', ' or '));
+    }
+  } else {
+    parts.push('Showing articles');
+  }
+  if (phraseTerms.length) {
+    parts.push('containing the exact phrase ' + summaryTerms(phraseTerms.map(p => '“' + p + '”'), 's-phrase', ' and '));
+  }
+  if (siteTerms.length) {
+    parts.push('only from ' + summaryTerms(siteTerms, 's-site', ' or '));
+  }
+  if (excludeTerms.length) {
+    parts.push('but not ' + summaryTerms(excludeTerms, 's-not', ' or '));
+  }
+
+  el.innerHTML = parts.join('<span class="s-join">, </span>') + '<span class="s-join">.</span>';
+}
+
+// ============================================
+// CONDITIONS: open / remove / palette
+// ============================================
+
+const ADD_ROWS   = { also: 'alsoAddRow',  phrase: 'phraseAddRow',  exclude: 'excludeAddRow', sites: 'siteAddRow' };
+const ADD_INPUTS = { also: 'alsoAddInput', phrase: 'phraseAddInput', exclude: 'excludeAddInput', sites: 'siteAddInput' };
+
+function toggleCondPalette() {
+  document.getElementById('addCondPalette').classList.toggle('open');
+}
+
+function openCondition(type) {
+  document.getElementById('cond-' + type).style.display = 'block';
+  document.getElementById('addCondPalette').classList.remove('open');
+  refreshCondPalette();
+  // Reveal and focus the inline add input so the user can type straight away.
+  const row = document.getElementById(ADD_ROWS[type]);
+  row.style.display = 'inline-flex';
+  const input = document.getElementById(ADD_INPUTS[type]);
+  input.value = '';
+  input.focus();
+}
+
+function removeCondition(type) {
+  if (type === 'also') andGroups = [];
+  else if (type === 'phrase') phraseTerms = [];
+  else if (type === 'exclude') excludeTerms = [];
+  else if (type === 'sites') siteTerms = [];
+  document.getElementById('cond-' + type).style.display = 'none';
+  renderCondition(type);
+  refreshCondPalette();
+  updateUrl();
+}
+
+// Grey out palette options whose row is already open.
+function refreshCondPalette() {
+  document.querySelectorAll('.add-cond-opt').forEach(btn => {
+    const t = btn.dataset.target;
+    btn.disabled = document.getElementById('cond-' + t).style.display !== 'none';
   });
+}
+
+// ============================================
+// CONDITIONS: chips + add/remove per type
+// ============================================
+
+function renderChips(containerId, items, onRemove, opts) {
+  opts = opts || {};
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  items.forEach((t, i) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip ' + (opts.className || '');
+    const shown = opts.wrap ? opts.wrap(t) : t;
+    chip.textContent = (opts.prefix ? opts.prefix + ' ' : '') + shown + ' ×';
+    chip.setAttribute('aria-label', 'Remove ' + t);
+    chip.onclick = () => onRemove(i);
+    c.appendChild(chip);
+  });
+}
+
+function renderCondition(type) {
+  if (type === 'also') renderAlsoChips();
+  else if (type === 'phrase') renderPhraseChips();
+  else if (type === 'exclude') renderExcludeChips();
+  else if (type === 'sites') renderSiteChips();
+}
+
+// --- Must also mention (andGroups[0]) ---
+function renderAlsoChips() {
+  renderChips('alsoChips', andGroups[0] || [], removeAlsoTerm, { className: '' });
+}
+function commitAlsoTerm() {
+  const input = document.getElementById('alsoAddInput');
+  const term = input.value.trim();
+  if (term) {
+    if (!andGroups[0]) andGroups[0] = [];
+    andGroups[0].push(term);
+    renderAlsoChips();
+    updateUrl();
+  }
+  input.value = '';
+  input.focus();
+}
+function removeAlsoTerm(i) {
+  if (!andGroups[0]) return;
+  andGroups[0].splice(i, 1);
+  if (andGroups[0].length === 0) andGroups = [];
+  renderAlsoChips();
+  updateUrl();
+}
+
+// --- Exact phrase ---
+function renderPhraseChips() {
+  renderChips('phraseChips', phraseTerms, removePhraseTerm, { className: 'chip-phrase', wrap: t => '“' + t + '”' });
+}
+function commitPhraseTerm() {
+  const input = document.getElementById('phraseAddInput');
+  const term = input.value.trim().replace(/"/g, '');
+  if (term) { phraseTerms.push(term); renderPhraseChips(); updateUrl(); }
+  input.value = '';
+  input.focus();
+}
+function removePhraseTerm(i) {
+  phraseTerms.splice(i, 1);
+  renderPhraseChips();
+  updateUrl();
+}
+
+// --- Only from these sites ---
+function renderSiteChips() {
+  renderChips('siteChips', siteTerms, removeSiteTerm, { className: 'chip-site' });
+}
+function commitSiteTerm() {
+  const input = document.getElementById('siteAddInput');
+  // Accept a pasted URL or bare domain; keep just the host.
+  const term = input.value.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
+  if (term) { siteTerms.push(term); renderSiteChips(); updateUrl(); }
+  input.value = '';
+  input.focus();
+}
+function removeSiteTerm(i) {
+  siteTerms.splice(i, 1);
+  renderSiteChips();
   updateUrl();
 }
 
@@ -1281,41 +1532,21 @@ function commitCustomTerm() {
   showSuggestions();
 }
 
-function addExcludeTerm() {
-  const row = document.getElementById('excludeAddRow');
-  row.style.display = 'inline-flex';
-  const input = document.getElementById('excludeAddInput');
-  input.value = '';
-  input.focus();
+// --- Exclude ---
+function renderExcludeChips() {
+  renderChips('excludeChips', excludeTerms, removeExcludeTerm, { className: 'chip-exclude', prefix: '−' });
 }
-
 function commitExcludeTerm() {
   const input = document.getElementById('excludeAddInput');
   const term = input.value.trim();
-  if (term) {
-    excludeTerms.push(term);
-    renderExcludeChips();
-    updateUrl();
-  }
-  document.getElementById('excludeAddRow').style.display = 'none';
+  if (term) { excludeTerms.push(term); renderExcludeChips(); updateUrl(); }
+  input.value = '';
+  input.focus();
 }
-
 function removeExcludeTerm(idx) {
   excludeTerms.splice(idx, 1);
   renderExcludeChips();
   updateUrl();
-}
-
-function renderExcludeChips() {
-  const container = document.getElementById('excludeChips');
-  container.innerHTML = '';
-  excludeTerms.forEach((t, i) => {
-    const chip = document.createElement('button');
-    chip.className = 'chip chip-exclude';
-    chip.textContent = '− ' + t + ' ×';
-    chip.onclick = () => removeExcludeTerm(i);
-    container.appendChild(chip);
-  });
 }
 
 function copyUrl() {
@@ -1531,18 +1762,17 @@ function showToast(msg) {
 // ============================================
 
 document.getElementById('searchInput').addEventListener('input', () => {
+  // Retyping the main term resets its suggestion-derived chips, but the
+  // conditions you've built (also-mention, phrases, excludes, sites) persist.
   selectedTerms = [];
   customTerms = [];
-  excludeTerms = [];
   articles = [];
   document.getElementById('customAddRow').style.display = 'none';
-  document.getElementById('excludeAddRow').style.display = 'none';
-  renderExcludeChips();
   showSuggestions();
   updateUrl();
 });
 
-// Inline add inputs: Enter commits, Escape cancels
+// Transient "add custom variation" input: Enter commits, Escape hides the row.
 function wireInlineAdd(inputId, rowId, commit) {
   document.getElementById(inputId).addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
@@ -1550,7 +1780,18 @@ function wireInlineAdd(inputId, rowId, commit) {
   });
 }
 wireInlineAdd('customAddInput', 'customAddRow', commitCustomTerm);
-wireInlineAdd('excludeAddInput', 'excludeAddRow', commitExcludeTerm);
+
+// Condition add inputs stay open while their row is active: Enter commits, Escape clears.
+function wireConditionAdd(inputId, commit) {
+  document.getElementById(inputId).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    else if (e.key === 'Escape') { e.target.value = ''; }
+  });
+}
+wireConditionAdd('alsoAddInput', commitAlsoTerm);
+wireConditionAdd('phraseAddInput', commitPhraseTerm);
+wireConditionAdd('excludeAddInput', commitExcludeTerm);
+wireConditionAdd('siteAddInput', commitSiteTerm);
 
 document.getElementById('langSelect').addEventListener('change', updateUrl);
 document.getElementById('countrySelect').addEventListener('change', updateUrl);
