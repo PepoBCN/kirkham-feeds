@@ -204,15 +204,6 @@
       font-size: 0.7rem;
       margin-left: 0.15rem;
     }
-    .chip-custom {
-      background: var(--green-dim);
-      color: var(--green);
-    }
-    .chip-custom:hover, .chip-custom.selected {
-      background: var(--green);
-      color: #fff;
-    }
-
     /* AI-suggested chips — a subtle violet tint + sparkle marker, on-theme */
     .chip-ai {
       background: rgba(124, 58, 237, 0.09);
@@ -252,25 +243,6 @@
     .chip-exclude:hover {
       background: var(--red);
       color: #fff;
-    }
-
-    /* Add custom term */
-    .add-custom {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.4rem 0.7rem;
-      background: transparent;
-      border: 1px dashed var(--border);
-      border-radius: 100px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .add-custom:hover {
-      border-color: var(--text-muted);
-      color: var(--text);
     }
 
     /* Conditions builder (replaces the old AND/OR toggle + syntax cheatsheet) */
@@ -382,6 +354,24 @@
     .chip-phrase:hover { background: var(--accent); color: #fff; }
 
     /* Trusted titles picker — publisher chips grouped by category */
+    .trusted-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .trusted-clear {
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 0.74rem;
+      color: var(--accent);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .trusted-clear:hover { text-decoration: underline; }
     .trusted-intro {
       font-size: 0.88rem;
       line-height: 1.55;
@@ -912,6 +902,22 @@
       .url-output .btn { flex: 1; }
     }
 
+    /* Native-mode caption under Refine */
+    .refine-native-note {
+      margin-top: 0.7rem;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* Mobile: stack the save-feed form so it doesn't crush */
+    @media (max-width: 600px) {
+      .save-form { flex-direction: column; align-items: stretch; }
+      .save-form input[type="text"] { min-width: 0; width: 100%; }
+      .save-form .styled-select { width: 100%; min-width: 0; }
+      .inline-add input { width: 100%; max-width: none; }
+    }
+
     /* Inline "add term" input (replaces native prompt dialogs) */
     .inline-add {
       display: inline-flex;
@@ -989,13 +995,20 @@
       min-height: 0;
     }
     .ai-status:empty { display: none; }
-    .ai-or {
-      font-size: 0.72rem;
+    .ai-hint-eg {
+      font-size: 0.74rem;
       color: var(--text-dim);
-      text-align: center;
-      margin: 0.7rem 0 0.2rem;
-      letter-spacing: 0.02em;
+      font-style: italic;
+      margin-top: 0.45rem;
     }
+    .ai-or {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0.9rem 0 0.35rem;
+    }
+    .ai-or::before, .ai-or::after { content: ''; height: 1px; background: var(--border); flex: 1; }
+    .ai-or span { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.02em; white-space: nowrap; }
     /* brief highlight when AI fills the cards */
     @keyframes aiPulse { 0% { box-shadow: 0 0 0 2px var(--accent-dim); } 100% { box-shadow: 0 0 0 2px transparent; } }
     .ai-filled { animation: aiPulse 1.1s ease-out; }
@@ -1088,16 +1101,17 @@
 
   <!-- Step 1: Search -->
   <div class="card">
-    <label class="card-label" for="searchInput">1. What do you want to track?</label>
+    <label class="card-label" for="searchInput">What do you want to track?</label>
 
     <!-- AI "describe it" bar — fills the rule cards below from plain English -->
     <div class="ai-bar">
       <span class="ai-bar-spark">✦</span>
-      <input type="text" id="aiInput" placeholder="Describe it: Tesla &amp; Musk, must mention earnings, exclude opinion + Tesla's own site…" aria-label="Describe your feed in plain English" autocomplete="off">
+      <input type="text" id="aiInput" placeholder="Describe your feed in plain English…" aria-label="Describe your feed in plain English" autocomplete="off">
       <button type="button" class="ai-bar-go" id="aiGo" onclick="runAiParse()">Build</button>
     </div>
-    <div class="ai-status" id="aiStatus"></div>
-    <div class="ai-or">or build it by hand</div>
+    <div class="ai-status" id="aiStatus" aria-live="polite"></div>
+    <div class="ai-hint-eg">e.g. “Tesla &amp; Musk, must mention earnings, exclude opinion and Tesla's own site”</div>
+    <div class="ai-or"><span>or build it by hand</span></div>
 
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="Type a word and press Enter…" aria-label="Search term" autocomplete="off">
@@ -1159,7 +1173,7 @@
           <div class="rule-card">
             <div class="rule-head">
               <span class="rule-title">Exact phrase</span>
-              <span class="rule-anyof">word-for-word</span>
+              <span class="rule-anyof">exact wording</span>
               <button type="button" class="cond-remove" aria-label="Remove this rule" onclick="removeCondition('phrase')">×</button>
             </div>
             <div class="rule-chips" id="phraseChips"></div>
@@ -1176,7 +1190,7 @@
           <div class="rule-card rule-card-exclude">
             <div class="rule-head">
               <span class="rule-title">Exclude</span>
-              <span class="rule-anyof">hide any of these</span>
+              <span class="rule-anyof">none of these</span>
               <button type="button" class="cond-remove" aria-label="Remove this rule" onclick="removeCondition('exclude')">×</button>
             </div>
             <div class="rule-chips" id="excludeChips"></div>
@@ -1193,7 +1207,7 @@
           <div class="rule-card rule-card-exclude">
             <div class="rule-head">
               <span class="rule-title">Exclude these sites</span>
-              <span class="rule-anyof">hide these publishers</span>
+              <span class="rule-anyof">not these publishers</span>
               <button type="button" class="cond-remove" aria-label="Remove this rule" onclick="removeCondition('exsites')">×</button>
             </div>
             <div class="rule-chips" id="exsiteChips"></div>
@@ -1232,7 +1246,10 @@
 
   <!-- Trusted titles (rendered only if the catalog endpoint is reachable) -->
   <div class="card" id="trustedCard" style="display:none;">
-    <div class="card-label">Trusted titles</div>
+    <div class="trusted-head">
+      <span class="card-label" style="margin:0;">Trusted titles</span>
+      <button type="button" class="trusted-clear" id="trustedClear" style="display:none;" onclick="clearSources()">Clear selection · back to Google News</button>
+    </div>
     <p class="trusted-intro">Read these publishers' own feeds directly, filtered by your terms. Picking any switches your feed to these sources only.</p>
     <div id="trustedGroups"></div>
     <div class="trusted-note" id="trustedNote" style="display:none;"></div>
@@ -1240,7 +1257,7 @@
 
   <!-- Step 2: Parameters -->
   <div class="card">
-    <div class="card-label">2. Refine</div>
+    <div class="card-label">Refine</div>
     <div class="params-grid">
       <div class="param-group">
         <label for="langSelect">Language</label>
@@ -1297,13 +1314,14 @@
         </select>
       </div>
     </div>
+    <div class="refine-native-note" id="refineNativeNote" style="display:none;">Not used while reading trusted titles — those feeds come straight from the publishers.</div>
   </div>
 
   <!-- Step 3: Your RSS URL -->
   <div class="card">
-    <div class="card-label">3. Your RSS feed</div>
+    <div class="card-label">Your RSS feed</div>
     <div class="url-output">
-      <div class="url-box" id="urlBox">Enter a search term above...</div>
+      <div class="url-box" id="urlBox">Describe a feed or add a term above to get started…</div>
       <button class="btn btn-sm" id="copyBtn" onclick="copyUrl()">Copy</button>
       <button class="btn btn-sm btn-outline" id="saveBtn" onclick="toggleSaveForm()">Save</button>
       <span class="copied-msg" id="copiedMsg">Copied</span>
@@ -1319,9 +1337,9 @@
 
   <!-- Step 4: Preview -->
   <div class="card">
-    <div class="card-label">4. Preview</div>
+    <div class="card-label">Preview</div>
     <div id="previewArea">
-      <div class="preview-empty">Type a search term to see a live preview of your feed</div>
+      <div class="preview-empty">Describe a feed or add a term above to see a live preview</div>
     </div>
   </div>
 
@@ -1608,7 +1626,7 @@ function updateUrl() {
   const urlBox = document.getElementById('urlBox');
 
   if (!url) {
-    urlBox.textContent = 'Enter a search term above...';
+    urlBox.textContent = 'Describe a feed or add a term above to get started…';
     urlBox.style.color = 'var(--text-dim)';
   } else {
     urlBox.textContent = url;
@@ -1624,14 +1642,29 @@ function updateUrl() {
   renderTrackChips();
   updateSummary();
   updateQueryPreview();
+  reflectSourceMode();
 
   // Debounced preview
   clearTimeout(previewTimeout);
   if (url) {
     previewTimeout = setTimeout(() => fetchPreview(url), 600);
   } else {
-    document.getElementById('previewArea').innerHTML = '<div class="preview-empty">Type a search term to see a live preview of your feed</div>';
+    document.getElementById('previewArea').innerHTML = '<div class="preview-empty">Describe a feed or add a term above to see a live preview</div>';
   }
+}
+
+// In trusted-titles (native) mode the Refine controls don't apply — dim them + caption.
+function reflectSourceMode() {
+  const native = selectedSources.length > 0;
+  ['langSelect', 'countrySelect', 'whenSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = native;
+    el.style.opacity = native ? '0.45' : '';
+    el.setAttribute('aria-disabled', native ? 'true' : 'false');
+  });
+  const cap = document.getElementById('refineNativeNote');
+  if (cap) cap.style.display = native ? '' : 'none';
 }
 
 function updateQueryPreview() {
@@ -1699,7 +1732,7 @@ function updateSummary() {
   const groups = includeGroups();
   const hasAny = groups.length || phraseTerms.length || excludeTerms.length || siteTerms.length || excludeSiteTerms.length;
   if (!hasAny) {
-    el.innerHTML = '<span class="s-join">Type what you want to track above, then add conditions to shape the feed.</span>';
+    el.innerHTML = '<span class="s-join">Describe a feed above, or add terms by hand, to get started.</span>';
     return;
   }
 
@@ -1873,7 +1906,7 @@ function showAlsoSuggestions() {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chip chip-ai';
-      chip.innerHTML = '<span class="ai-spark">✨</span>' + escapeHtml('+ ' + s);
+      chip.innerHTML = '<span class="ai-spark">✦</span>' + escapeHtml('+ ' + s);
       if (inGroup(s)) chip.classList.add('selected');
       chip.onclick = () => { addAlsoTerm(s); showAlsoSuggestions(); };
       container.appendChild(chip);
@@ -1969,7 +2002,7 @@ function showSuggestions() {
     if (isSel) {
       chip.textContent = suggestion + ' ×';
     } else if (ai) {
-      chip.innerHTML = '<span class="ai-spark">✨</span>' + escapeHtml('+ ' + suggestion);
+      chip.innerHTML = '<span class="ai-spark">✦</span>' + escapeHtml('+ ' + suggestion);
     } else {
       chip.textContent = '+ ' + suggestion;
     }
@@ -2083,17 +2116,26 @@ function renderTrustedPicker() {
   // Note: Country / Time window don't apply when reading native publisher feeds.
   const note = document.getElementById('trustedNote');
   if (selectedSources.length) {
-    note.textContent = 'Reading these publishers’ own feeds. The Country and Time window options below don’t apply in this mode.';
+    note.textContent = 'Reading these publishers’ own feeds. The Refine options below don’t apply in this mode.';
     note.style.display = '';
   } else {
     note.style.display = 'none';
   }
+  const clearBtn = document.getElementById('trustedClear');
+  if (clearBtn) clearBtn.style.display = selectedSources.length ? '' : 'none';
 }
 
 function toggleSource(id) {
   const i = selectedSources.indexOf(id);
   if (i >= 0) selectedSources.splice(i, 1);
   else selectedSources.push(id);
+  renderTrustedPicker();
+  updateUrl();
+}
+
+// Drop all trusted-title selections → back to the Google News feed.
+function clearSources() {
+  selectedSources = [];
   renderTrustedPicker();
   updateUrl();
 }
@@ -2396,6 +2438,14 @@ searchEl.addEventListener('keydown', (e) => {
     updateUrl();
   }
 });
+// Don't lose a half-typed term when focus leaves the box — pin it as a chip.
+searchEl.addEventListener('blur', () => {
+  if (searchEl.value.trim()) {
+    commitTrackInput();
+    showSuggestions();
+    updateUrl();
+  }
+});
 
 // Condition add inputs stay open while their row is active: Enter commits, Escape clears.
 function wireConditionAdd(inputId, commit) {
@@ -2607,7 +2657,7 @@ async function runAiParse() {
       status.textContent = '';
       showToast('Feed built from your description');
     } else {
-      status.textContent = "Couldn't read that — try rephrasing it.";
+      status.textContent = "Couldn't read that — try rephrasing, or build it by hand below.";
     }
   } catch {
     status.textContent = "Couldn't reach the AI — try again.";
@@ -2647,6 +2697,11 @@ function applyParsedState(s) {
 
 document.getElementById('aiInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); runAiParse(); }
+});
+// Clear any stale error/status as soon as the user starts typing again.
+document.getElementById('aiInput').addEventListener('input', () => {
+  const st = document.getElementById('aiStatus');
+  if (st.textContent) st.textContent = '';
 });
 
 // Init
