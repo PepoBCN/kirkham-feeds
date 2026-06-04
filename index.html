@@ -944,6 +944,62 @@
     }
     .inline-add .inline-add-go:hover { background: var(--accent-hover); }
 
+    /* AI "describe it" bar */
+    .ai-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.5rem 0.5rem 0.85rem;
+      background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+                  linear-gradient(95deg, var(--accent), #8a6cf0) border-box;
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+    }
+    .ai-bar-spark { color: var(--accent); font-size: 0.95rem; flex-shrink: 0; }
+    .ai-bar input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .ai-bar input::placeholder { color: var(--text-dim); }
+    .ai-bar-go {
+      flex-shrink: 0;
+      padding: 0.45rem 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ai-bar-go:hover { background: var(--accent-hover); }
+    .ai-bar-go:disabled { opacity: 0.6; cursor: default; }
+    .ai-status {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 0.45rem;
+      min-height: 0;
+    }
+    .ai-status:empty { display: none; }
+    .ai-or {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-align: center;
+      margin: 0.7rem 0 0.2rem;
+      letter-spacing: 0.02em;
+    }
+    /* brief highlight when AI fills the cards */
+    @keyframes aiPulse { 0% { box-shadow: 0 0 0 2px var(--accent-dim); } 100% { box-shadow: 0 0 0 2px transparent; } }
+    .ai-filled { animation: aiPulse 1.1s ease-out; }
+
     /* Save-feed form + saved feeds list */
     .save-form {
       display: flex;
@@ -1033,6 +1089,16 @@
   <!-- Step 1: Search -->
   <div class="card">
     <label class="card-label" for="searchInput">1. What do you want to track?</label>
+
+    <!-- AI "describe it" bar — fills the rule cards below from plain English -->
+    <div class="ai-bar">
+      <span class="ai-bar-spark">✦</span>
+      <input type="text" id="aiInput" placeholder="Describe it: Tesla &amp; Musk, must mention earnings, exclude opinion + Tesla's own site…" aria-label="Describe your feed in plain English" autocomplete="off">
+      <button type="button" class="ai-bar-go" id="aiGo" onclick="runAiParse()">Build</button>
+    </div>
+    <div class="ai-status" id="aiStatus"></div>
+    <div class="ai-or">or build it by hand</div>
+
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="Type a word and press Enter…" aria-label="Search term" autocomplete="off">
       <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -2515,6 +2581,73 @@ function renderSavedFeeds() {
     wrap.appendChild(block);
   });
 }
+
+// ============================================
+// AI "DESCRIBE IT" MODE — plain English → fills the rule cards
+// ============================================
+async function runAiParse() {
+  const inp = document.getElementById('aiInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  const status = document.getElementById('aiStatus');
+  const go = document.getElementById('aiGo');
+  status.textContent = '✦ Reading your description…';
+  go.disabled = true;
+  try {
+    const current = { trackTerms, andGroups, phraseTerms, excludeTerms, siteTerms, excludeSiteTerms };
+    const res = await fetch('/.netlify/functions/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, current }),
+    });
+    const data = await res.json();
+    if (data && data.state && hasAnyState(data.state)) {
+      applyParsedState(data.state);
+      inp.value = '';
+      status.textContent = '';
+      showToast('Feed built from your description');
+    } else {
+      status.textContent = "Couldn't read that — try rephrasing it.";
+    }
+  } catch {
+    status.textContent = "Couldn't reach the AI — try again.";
+  } finally {
+    go.disabled = false;
+  }
+}
+
+function hasAnyState(s) {
+  return ['trackTerms','andGroups','phraseTerms','excludeTerms','siteTerms','excludeSiteTerms']
+    .some(k => Array.isArray(s[k]) && s[k].length);
+}
+
+// Overwrite the query state from an AI-parsed result and re-render the cards.
+function applyParsedState(s) {
+  trackTerms = Array.isArray(s.trackTerms) ? s.trackTerms.filter(x => typeof x === 'string') : [];
+  andGroups = Array.isArray(s.andGroups)
+    ? s.andGroups.filter(Array.isArray).map(g => g.filter(x => typeof x === 'string')).filter(g => g.length)
+    : [];
+  if (andGroups.length > 1) andGroups = [andGroups.flat()];   // the UI shows a single "also" card
+  phraseTerms = Array.isArray(s.phraseTerms) ? s.phraseTerms.filter(x => typeof x === 'string') : [];
+  excludeTerms = Array.isArray(s.excludeTerms) ? s.excludeTerms.filter(x => typeof x === 'string') : [];
+  siteTerms = Array.isArray(s.siteTerms) ? s.siteTerms.filter(x => typeof x === 'string') : [];
+  excludeSiteTerms = Array.isArray(s.excludeSiteTerms) ? s.excludeSiteTerms.filter(x => typeof x === 'string') : [];
+  document.getElementById('searchInput').value = '';
+  ['also', 'sites', 'phrase', 'exclude', 'exsites'].forEach(t => {
+    document.getElementById('cond-' + t).style.display = condHasContent(t) ? '' : 'none';
+  });
+  renderTrackChips();
+  renderAlsoChips(); renderSiteChips(); renderPhraseChips(); renderExcludeChips(); renderExSiteChips();
+  refreshCondPalette();
+  showSuggestions();
+  updateUrl();
+  const stack = document.querySelector('.rule-stack');
+  if (stack) { stack.classList.remove('ai-filled'); void stack.offsetWidth; stack.classList.add('ai-filled'); }
+}
+
+document.getElementById('aiInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); runAiParse(); }
+});
 
 // Init
 updateUrl();
