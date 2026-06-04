@@ -13,7 +13,7 @@ export default async (req) => {
   try {
     const response = await fetch(rssUrl, {
       headers: {
-        'User-Agent': 'KirkhamFeeds/1.0',
+        'User-Agent': 'PepoFeeds/1.0',
         'Accept': 'application/rss+xml, application/xml, text/xml',
       },
     });

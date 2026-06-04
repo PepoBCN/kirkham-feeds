@@ -106,7 +106,7 @@ const MAX_GROUPS = 30;
 const MAX_EXC = 30;
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-  '(KHTML, like Gecko) Chrome/124.0 Safari/537.36 KirkhamFeeds/1.0';
+  '(KHTML, like Gecko) Chrome/124.0 Safari/537.36 PepoFeeds/1.0';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -340,13 +340,13 @@ function rssResponse(items) {
   parts.push('<?xml version="1.0" encoding="UTF-8"?>');
   parts.push('<rss version="2.0">');
   parts.push('<channel>');
-  parts.push('<title>Kirkham Feeds — Trusted titles</title>');
+  parts.push('<title>Pepo Feeds — Trusted titles</title>');
   parts.push('<link>https://kirkham-feeds.netlify.app/</link>');
   parts.push(
     '<description>Keyword-filtered merge of selected tier-one publishers&apos; own RSS feeds.</description>'
   );
   parts.push('<lastBuildDate>' + xmlEscape(now) + '</lastBuildDate>');
-  parts.push('<generator>Kirkham Feeds</generator>');
+  parts.push('<generator>Pepo Feeds</generator>');
 
   for (const it of items) {
     parts.push('<item>');
