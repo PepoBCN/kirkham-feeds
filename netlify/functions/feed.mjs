@@ -68,7 +68,6 @@ const CATALOG = [
   // --- US ---
   { id: 'nyt',          name: 'The New York Times',  category: 'US',       url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
   { id: 'npr',          name: 'NPR News',            category: 'US',       url: 'https://feeds.npr.org/1001/rss.xml' },
-  { id: 'cnn',          name: 'CNN',                 category: 'US',       url: 'https://rss.cnn.com/rss/edition.rss' },
   { id: 'foxnews',      name: 'Fox News',            category: 'US',       url: 'https://moxie.foxnews.com/google-publisher/latest.xml' },
   { id: 'washpost',     name: 'The Washington Post', category: 'US',       url: 'https://feeds.washingtonpost.com/rss/world' },
   { id: 'politico',     name: 'Politico',            category: 'US',       url: 'https://rss.politico.com/politics-news.xml' },
