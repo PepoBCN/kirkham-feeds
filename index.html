@@ -381,6 +381,36 @@
     .chip-phrase { background: var(--accent-dim); color: var(--accent); }
     .chip-phrase:hover { background: var(--accent); color: #fff; }
 
+    /* Trusted titles picker — publisher chips grouped by category */
+    .trusted-intro {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .trusted-group { margin-bottom: 1rem; }
+    .trusted-group:last-child { margin-bottom: 0; }
+    .trusted-group-head {
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .trusted-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .trusted-note {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
     /* "+ Add a condition" control */
     .add-condition { margin-top: 0.25rem; }
     .add-cond-toggle {
@@ -1134,6 +1164,14 @@
     </div>
   </div>
 
+  <!-- Trusted titles (rendered only if the catalog endpoint is reachable) -->
+  <div class="card" id="trustedCard" style="display:none;">
+    <div class="card-label">Trusted titles</div>
+    <p class="trusted-intro">Read these publishers' own feeds directly, filtered by your terms. Picking any switches your feed to these sources only.</p>
+    <div id="trustedGroups"></div>
+    <div class="trusted-note" id="trustedNote" style="display:none;"></div>
+  </div>
+
   <!-- Step 2: Parameters -->
   <div class="card">
     <div class="card-label">2. Refine</div>
@@ -1326,6 +1364,12 @@ let excludeSiteTerms = [];  // publisher domains to exclude (compiled to -site: 
 let articles = [];
 let previewTimeout = null;
 
+// Trusted titles: hosted-feed source IDs the user has selected. When >=1 is
+// chosen the feed URL switches from Google News to our own /feed endpoint,
+// which returns ONLY those publishers' feeds, keyword-filtered by the rules.
+let selectedSources = [];
+let trustedCatalog = [];   // [{id, name, category}, ...] once the catalog loads
+
 // ============================================
 // SAFETY HELPERS
 // ============================================
@@ -1447,7 +1491,27 @@ function buildQuery() {
   return fragments.join(' ').trim();
 }
 
+// True when the current URL points at our own hosted feed endpoint.
+function isNativeUrl(url) {
+  return typeof url === 'string' && url.indexOf('/.netlify/functions/feed') !== -1;
+}
+
+// Hosted trusted-titles feed: only the selected publishers' feeds, keyword-filtered.
+// The keyword filter mirrors the rule cards: include OR-groups + each exact phrase
+// (as its own single-term group), and the exclude terms. Both are optional — a
+// source selection alone produces an unfiltered merge of those publishers.
+function buildNativeUrl() {
+  const filter = {
+    inc: includeGroups().concat(phraseTerms.map(p => [p])),
+    exc: [...excludeTerms],
+  };
+  return `${location.origin}/.netlify/functions/feed?sources=${selectedSources.join(',')}&filter=${encodeURIComponent(JSON.stringify(filter))}`;
+}
+
 function buildUrl() {
+  // Native (trusted-titles) mode needs only >=1 source; keyword filter optional.
+  if (selectedSources.length) return buildNativeUrl();
+
   const query = buildQuery();
   if (!query) return '';
 
@@ -1485,8 +1549,9 @@ function updateUrl() {
     urlBox.style.color = 'var(--accent)';
   }
 
-  // Show the rule builder once there's a track term or any rule in play.
-  const hasContent = trackTerms.length > 0 || getSearchTerm() !== '' || buildQuery() !== '';
+  // Show the rule builder once there's a track term or any rule in play. In
+  // trusted-titles mode keep it visible too, so terms can refine the source feeds.
+  const hasContent = trackTerms.length > 0 || getSearchTerm() !== '' || buildQuery() !== '' || selectedSources.length > 0;
   document.getElementById('queryControls').classList.toggle('visible', hasContent);
 
   // Keep the track chips, plain-English summary and technical query in sync.
@@ -1525,8 +1590,45 @@ function summaryTerms(terms, cls, joiner) {
     .join(`<span class="s-join">${joiner}</span>`);
 }
 
+// A short plain-English read-back of the keyword filter, reused by the native-mode summary.
+function keywordSummaryText() {
+  const groups = includeGroups();
+  const bits = [];
+  if (groups.length) {
+    bits.push(summaryTerms(groups[0], 's-term', ' or '));
+    for (let i = 1; i < groups.length; i++) bits.push('and ' + summaryTerms(groups[i], 's-term', ' or '));
+  }
+  if (phraseTerms.length) {
+    bits.push('the exact phrase ' + summaryTerms(phraseTerms.map(p => '“' + p + '”'), 's-phrase', ' and '));
+  }
+  if (excludeTerms.length) {
+    bits.push('but not ' + summaryTerms(excludeTerms, 's-not', ' or '));
+  }
+  return bits.join('<span class="s-join">, </span>');
+}
+
 function updateSummary() {
   const el = document.getElementById('summarySentence');
+
+  // Trusted-titles mode: read which publishers we're reading + the keyword filter.
+  if (selectedSources.length) {
+    const names = selectedSources.map(id => {
+      const s = trustedCatalog.find(x => x.id === id);
+      return s ? s.name : id;
+    });
+    let who;
+    if (names.length <= 2) {
+      who = names.map(n => `<span class="s-site">${escapeHtml(n)}</span>`).join('<span class="s-join"> and </span>');
+    } else {
+      who = names.slice(0, 2).map(n => `<span class="s-site">${escapeHtml(n)}</span>`).join('<span class="s-join">, </span>')
+        + `<span class="s-join"> +${names.length - 2} more</span>`;
+    }
+    const kw = keywordSummaryText();
+    el.innerHTML = 'Reading ' + who
+      + (kw ? '<span class="s-join">, filtered by </span>' + kw : '<span class="s-join"> (no keyword filter)</span>')
+      + '<span class="s-join">.</span>';
+    return;
+  }
 
   const groups = includeGroups();
   const hasAny = groups.length || phraseTerms.length || excludeTerms.length || siteTerms.length || excludeSiteTerms.length;
@@ -1845,6 +1947,92 @@ function toggleTerm(term) {
 }
 
 // ============================================
+// TRUSTED TITLES (hosted publisher feeds)
+// ============================================
+// Backend contract:
+//   GET /.netlify/functions/feed?catalog=1
+//     -> 200 JSON { "sources": [{ id, name, category }, ...] }
+//   GET /.netlify/functions/feed?sources=<ids>&filter=<urlencoded JSON>
+//     -> RSS XML of just those publishers, keyword-filtered.
+// The picker only renders if the catalog endpoint returns sources. If it 404s
+// or fails (e.g. while the function is un-deployed), nothing renders and the
+// app behaves exactly as before.
+
+async function loadTrustedCatalog() {
+  let sources = [];
+  try {
+    const res = await fetch('/.netlify/functions/feed?catalog=1');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.sources)) {
+        sources = data.sources.filter(s => s && s.id && s.name);
+      }
+    }
+  } catch (e) {
+    sources = [];
+  }
+  if (!sources.length) return;   // degrade to nothing — card stays hidden
+
+  trustedCatalog = sources;
+  renderTrustedPicker();
+  document.getElementById('trustedCard').style.display = '';
+}
+
+function renderTrustedPicker() {
+  const wrap = document.getElementById('trustedGroups');
+  wrap.innerHTML = '';
+
+  // Group by category, preserving first-seen order.
+  const order = [];
+  const byCat = new Map();
+  trustedCatalog.forEach(s => {
+    const cat = s.category || 'Other';
+    if (!byCat.has(cat)) { byCat.set(cat, []); order.push(cat); }
+    byCat.get(cat).push(s);
+  });
+
+  order.forEach(cat => {
+    const group = document.createElement('div');
+    group.className = 'trusted-group';
+    const head = document.createElement('div');
+    head.className = 'trusted-group-head';
+    head.textContent = cat;
+    const chips = document.createElement('div');
+    chips.className = 'trusted-chips';
+    byCat.get(cat).forEach(s => {
+      const sel = selectedSources.includes(s.id);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (sel ? ' selected' : '');
+      chip.textContent = s.name;
+      chip.setAttribute('aria-pressed', sel ? 'true' : 'false');
+      chip.onclick = () => toggleSource(s.id);
+      chips.appendChild(chip);
+    });
+    group.appendChild(head);
+    group.appendChild(chips);
+    wrap.appendChild(group);
+  });
+
+  // Note: Country / Time window don't apply when reading native publisher feeds.
+  const note = document.getElementById('trustedNote');
+  if (selectedSources.length) {
+    note.textContent = 'Reading these publishers’ own feeds. The Country and Time window options below don’t apply in this mode.';
+    note.style.display = '';
+  } else {
+    note.style.display = 'none';
+  }
+}
+
+function toggleSource(id) {
+  const i = selectedSources.indexOf(id);
+  if (i >= 0) selectedSources.splice(i, 1);
+  else selectedSources.push(id);
+  renderTrustedPicker();
+  updateUrl();
+}
+
+// ============================================
 // AI SUGGESTIONS
 // ============================================
 // Backend contract: GET /.netlify/functions/suggest?term=<urlencoded>
@@ -1949,24 +2137,37 @@ async function fetchPreview(url) {
   const previewArea = document.getElementById('previewArea');
   previewArea.innerHTML = '<div class="preview-loading"><div class="spinner"></div><br>Fetching feed...</div>';
 
-  const proxyUrl = `/.netlify/functions/fetch-rss?url=${encodeURIComponent(url)}`;
   let xmlText = null;
 
-  // Try our own proxy first, retrying once — the Netlify function can be slow
-  // on a cold start, which previously surfaced as a one-off "couldn't load".
-  for (let attempt = 0; attempt < 2 && xmlText === null; attempt++) {
-    try {
-      xmlText = await fetchWithTimeout(proxyUrl, 12000);
-    } catch (e) {
-      if (attempt === 0) await new Promise(r => setTimeout(r, 400));
+  if (isNativeUrl(url)) {
+    // Trusted-titles feed is same-origin — fetch it directly (no proxy), with a
+    // single cold-start retry. Same <item> extraction is reused below.
+    for (let attempt = 0; attempt < 2 && xmlText === null; attempt++) {
+      try {
+        xmlText = await fetchWithTimeout(url, 12000);
+      } catch (e) {
+        if (attempt === 0) await new Promise(r => setTimeout(r, 400));
+      }
     }
-  }
+  } else {
+    const proxyUrl = `/.netlify/functions/fetch-rss?url=${encodeURIComponent(url)}`;
 
-  // Last resort: third-party CORS proxy.
-  if (xmlText === null) {
-    try {
-      xmlText = await fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), 12000);
-    } catch (e) { xmlText = null; }
+    // Try our own proxy first, retrying once — the Netlify function can be slow
+    // on a cold start, which previously surfaced as a one-off "couldn't load".
+    for (let attempt = 0; attempt < 2 && xmlText === null; attempt++) {
+      try {
+        xmlText = await fetchWithTimeout(proxyUrl, 12000);
+      } catch (e) {
+        if (attempt === 0) await new Promise(r => setTimeout(r, 400));
+      }
+    }
+
+    // Last resort: third-party CORS proxy.
+    if (xmlText === null) {
+      try {
+        xmlText = await fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), 12000);
+      } catch (e) { xmlText = null; }
+    }
   }
 
   if (xmlText === null) {
@@ -2080,13 +2281,16 @@ function renderPreview() {
     html += `<div style="padding: 0.75rem 0; color: var(--text-muted); font-size: 0.8rem;">+ ${articles.length - PREVIEW_LIMIT} more articles in the full feed</div>`;
   }
 
-  // Google News link
-  html += `
-    <a href="${gnSearchUrl}" target="_blank" rel="noopener" class="gn-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      View in Google News
-    </a>
-  `;
+  // Google News link — only meaningful for the Google News feed, not the
+  // trusted-titles (native) feed, so hide it in that mode.
+  if (!selectedSources.length) {
+    html += `
+      <a href="${gnSearchUrl}" target="_blank" rel="noopener" class="gn-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View in Google News
+      </a>
+    `;
+  }
 
   previewArea.innerHTML = html;
 }
@@ -2163,6 +2367,7 @@ function currentBuilderState() {
     excludeTerms: [...excludeTerms],
     siteTerms: [...siteTerms],
     excludeSiteTerms: [...excludeSiteTerms],
+    selectedSources: [...selectedSources],
     lang: document.getElementById('langSelect').value,
     country: document.getElementById('countrySelect').value,
     when: document.getElementById('whenSelect').value,
@@ -2186,6 +2391,7 @@ function applyBuilderState(s) {
   excludeTerms = [...(s.excludeTerms || [])];
   siteTerms = [...(s.siteTerms || [])];
   excludeSiteTerms = [...(s.excludeSiteTerms || [])];
+  selectedSources = [...(s.selectedSources || [])];
   document.getElementById('searchInput').value = '';
   if (s.lang) document.getElementById('langSelect').value = s.lang;
   if (s.country) document.getElementById('countrySelect').value = s.country;
@@ -2197,11 +2403,12 @@ function applyBuilderState(s) {
   renderAlsoChips(); renderSiteChips(); renderPhraseChips(); renderExcludeChips(); renderExSiteChips();
   refreshCondPalette();
   showSuggestions();
+  if (trustedCatalog.length) renderTrustedPicker();   // reflect restored source selection
   updateUrl();
 }
 
 function toggleSaveForm() {
-  if (!buildQuery()) { showToast('Build a feed first'); return; }
+  if (!buildQuery() && !selectedSources.length) { showToast('Build a feed first'); return; }
   const f = document.getElementById('saveForm');
   const showing = f.style.display !== 'none';
   f.style.display = showing ? 'none' : 'flex';
@@ -2312,6 +2519,7 @@ function renderSavedFeeds() {
 // Init
 updateUrl();
 renderSavedFeeds();
+loadTrustedCatalog();   // renders the Trusted titles card only if the catalog loads
 
 // Focus the search box on load, but only on wider screens so mobile
 // doesn't get an unsolicited keyboard pop.
