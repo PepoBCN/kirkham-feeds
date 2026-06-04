@@ -213,6 +213,37 @@
       color: #fff;
     }
 
+    /* AI-suggested chips — a subtle violet tint + sparkle marker, on-theme */
+    .chip-ai {
+      background: rgba(124, 58, 237, 0.09);
+      color: #6d28d9;
+    }
+    .chip-ai:hover, .chip-ai.selected {
+      background: #6d28d9;
+      color: #fff;
+    }
+    .chip-ai .ai-spark {
+      font-size: 0.72rem;
+      margin-right: 0.05rem;
+    }
+    /* Faint "finding related terms…" hint while an AI call is in flight */
+    .ai-hint {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.76rem;
+      font-style: italic;
+      color: var(--text-dim);
+      padding: 0.4rem 0.2rem;
+    }
+    /* AI suggestions under the "Must also mention" input */
+    .also-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.55rem;
+    }
+    .also-suggestions:empty { margin-top: 0; }
+
     /* Exclude chips */
     .chip-exclude {
       background: var(--red-dim);
@@ -930,6 +961,7 @@
               <input type="text" id="alsoAddInput" placeholder="Add a word…" aria-label="Word the article must also mention">
               <button type="button" class="inline-add-go" onclick="commitAlsoTerm()">Add</button>
             </div>
+            <div class="also-suggestions" id="alsoSuggestions"></div>
           </div>
         </div>
 
@@ -983,6 +1015,23 @@
             </div>
           </div>
         </div>
+
+        <!-- Exclude these sites -->
+        <div class="and-block" id="cond-exsites" data-cond="exsites" style="display:none;">
+          <div class="and-spine"><span>and</span></div>
+          <div class="rule-card rule-card-exclude">
+            <div class="rule-head">
+              <span class="rule-title">Exclude these sites</span>
+              <span class="rule-anyof">hide these publishers</span>
+              <button type="button" class="cond-remove" aria-label="Remove this rule" onclick="removeCondition('exsites')">×</button>
+            </div>
+            <div class="rule-chips" id="exsiteChips"></div>
+            <div class="inline-add" id="exsiteAddRow">
+              <input type="text" id="exsiteAddInput" placeholder="e.g. dailymail.co.uk" aria-label="Site domain to exclude">
+              <button type="button" class="inline-add-go" onclick="commitExSiteTerm()">Exclude</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- + Add another rule -->
@@ -993,6 +1042,7 @@
           <button type="button" class="add-cond-opt" data-target="sites" onclick="openCondition('sites')">+ Only from these sites</button>
           <button type="button" class="add-cond-opt" data-target="phrase" onclick="openCondition('phrase')">+ Exact phrase</button>
           <button type="button" class="add-cond-opt" data-target="exclude" onclick="openCondition('exclude')">− Exclude</button>
+          <button type="button" class="add-cond-opt" data-target="exsites" onclick="openCondition('exsites')">− Exclude sites</button>
         </div>
       </div>
 
@@ -1037,6 +1087,7 @@
       <div class="param-group">
         <label for="countrySelect">Country</label>
         <select id="countrySelect">
+          <option value="WW">🌐 Worldwide</option>
           <option value="GB" selected>United Kingdom</option>
           <option value="US">United States</option>
           <option value="ES">Spain</option>
@@ -1182,6 +1233,7 @@ let andGroups = [];       // extra AND-ed OR-groups; andGroups[0] = "Must also m
 let phraseTerms = [];
 let excludeTerms = [];
 let siteTerms = [];
+let excludeSiteTerms = [];  // publisher domains to exclude (compiled to -site: filters)
 let articles = [];
 let previewTimeout = null;
 
@@ -1291,6 +1343,12 @@ function buildQuery() {
     if (siteFrag) fragments.push(siteFrag);
   }
 
+  // 3b. Site exclusions — each an independent NOT clause (-site:domain).
+  excludeSiteTerms.forEach(s => {
+    const domain = String(s).trim();
+    if (domain) fragments.push('-site:' + domain);
+  });
+
   // 4. Exclusions last (-term).
   excludeTerms.forEach(t => {
     const term = String(t).trim();
@@ -1310,7 +1368,17 @@ function buildUrl() {
 
   const langShort = lang.split('-')[0];
 
-  let url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${lang}&gl=${country}&ceid=${country}:${langShort}`;
+  let url;
+  if (country === 'WW') {
+    // Worldwide: broadest global-English result set. Empirically tested against the
+    // live proxy (q=climate) — hl=en-US&gl=US&ceid=US:en returns a full 100-item
+    // feed with the widest source diversity (89 unique outlets incl. international
+    // wires), tied with the other candidates on volume but no worse on reach.
+    // Default the display language to en here regardless of the Language picker.
+    url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+  } else {
+    url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${lang}&gl=${country}&ceid=${country}:${langShort}`;
+  }
   if (when) url += `&when=${when}`;
 
   return url;
@@ -1372,7 +1440,7 @@ function updateSummary() {
   const el = document.getElementById('summarySentence');
 
   const groups = includeGroups();
-  const hasAny = groups.length || phraseTerms.length || excludeTerms.length || siteTerms.length;
+  const hasAny = groups.length || phraseTerms.length || excludeTerms.length || siteTerms.length || excludeSiteTerms.length;
   if (!hasAny) {
     el.innerHTML = '<span class="s-join">Type what you want to track above, then add conditions to shape the feed.</span>';
     return;
@@ -1396,6 +1464,9 @@ function updateSummary() {
   if (excludeTerms.length) {
     parts.push('but not ' + summaryTerms(excludeTerms, 's-not', ' or '));
   }
+  if (excludeSiteTerms.length) {
+    parts.push('not from ' + summaryTerms(excludeSiteTerms, 's-not', ' or '));
+  }
 
   el.innerHTML = parts.join('<span class="s-join">, </span>') + '<span class="s-join">.</span>';
 }
@@ -1404,7 +1475,7 @@ function updateSummary() {
 // CONDITIONS: open / remove / palette
 // ============================================
 
-const ADD_INPUTS = { also: 'alsoAddInput', phrase: 'phraseAddInput', exclude: 'excludeAddInput', sites: 'siteAddInput' };
+const ADD_INPUTS = { also: 'alsoAddInput', phrase: 'phraseAddInput', exclude: 'excludeAddInput', sites: 'siteAddInput', exsites: 'exsiteAddInput' };
 
 function toggleCondPalette() {
   document.getElementById('addCondPalette').classList.toggle('open');
@@ -1424,6 +1495,7 @@ function removeCondition(type) {
   else if (type === 'phrase') phraseTerms = [];
   else if (type === 'exclude') excludeTerms = [];
   else if (type === 'sites') siteTerms = [];
+  else if (type === 'exsites') excludeSiteTerms = [];
   document.getElementById('cond-' + type).style.display = 'none';
   renderCondition(type);
   refreshCondPalette();
@@ -1481,6 +1553,7 @@ function renderCondition(type) {
   else if (type === 'phrase') renderPhraseChips();
   else if (type === 'exclude') renderExcludeChips();
   else if (type === 'sites') renderSiteChips();
+  else if (type === 'exsites') renderExSiteChips();
 }
 
 // --- Must also mention (andGroups[0]) ---
@@ -1497,6 +1570,7 @@ function commitAlsoTerm() {
     updateUrl();
   }
   input.value = '';
+  showAlsoSuggestions();   // box is now empty -> clears the suggestion row
   input.focus();
 }
 function removeAlsoTerm(i) {
@@ -1505,6 +1579,49 @@ function removeAlsoTerm(i) {
   if (andGroups[0].length === 0) andGroups = [];
   renderAlsoChips();
   updateUrl();
+}
+// Commit a specific term (not the input box) into andGroups[0] — used by AI chips.
+function addAlsoTerm(term) {
+  const t = String(term || '').trim();
+  if (!t) return;
+  if (!andGroups[0]) andGroups[0] = [];
+  if (andGroups[0].some(x => x.toLowerCase() === t.toLowerCase())) return;
+  andGroups[0].push(t);
+  renderAlsoChips();
+  updateUrl();
+}
+// AI-related terms for whatever's being typed in the "Must also mention" box (debounced).
+function showAlsoSuggestions() {
+  const input = document.getElementById('alsoAddInput');
+  const container = document.getElementById('alsoSuggestions');
+  const raw = input.value.trim();
+  container.innerHTML = '';
+
+  alsoAiToken++;
+  clearTimeout(alsoAiTimer);
+  if (raw.length < 2) return;
+
+  const token = alsoAiToken;
+  const hint = document.createElement('span');
+  hint.className = 'ai-hint';
+  hint.textContent = 'finding related terms…';
+  container.appendChild(hint);
+
+  alsoAiTimer = setTimeout(async () => {
+    const ai = await aiSuggest(raw);
+    if (token !== alsoAiToken) return;
+    hint.remove();
+    const inGroup = (s) => (andGroups[0] || []).some(x => x.toLowerCase() === s.toLowerCase());
+    ai.forEach(s => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip chip-ai';
+      chip.innerHTML = '<span class="ai-spark">✨</span>' + escapeHtml('+ ' + s);
+      if (inGroup(s)) chip.classList.add('selected');
+      chip.onclick = () => { addAlsoTerm(s); showAlsoSuggestions(); };
+      container.appendChild(chip);
+    });
+  }, 350);
 }
 
 // --- Exact phrase ---
@@ -1542,14 +1659,37 @@ function removeSiteTerm(i) {
   updateUrl();
 }
 
+// --- Exclude these sites ---
+function renderExSiteChips() {
+  renderChips('exsiteChips', excludeSiteTerms, removeExSiteTerm, { className: 'chip-exclude', prefix: '−', sep: 'or' });
+}
+function commitExSiteTerm() {
+  const input = document.getElementById('exsiteAddInput');
+  // Accept a pasted URL or bare domain; keep just the host (same cleaning as commitSiteTerm).
+  const term = input.value.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim();
+  if (term) { excludeSiteTerms.push(term); renderExSiteChips(); updateUrl(); }
+  input.value = '';
+  input.focus();
+}
+function removeExSiteTerm(i) {
+  excludeSiteTerms.splice(i, 1);
+  renderExSiteChips();
+  updateUrl();
+}
+
 function showSuggestions() {
-  const term = getSearchTerm().toLowerCase();
+  const rawTerm = getSearchTerm();
+  const term = rawTerm.toLowerCase();
   const container = document.getElementById('suggestions');
   container.innerHTML = '';
 
+  // Cancel any in-flight AI request whose result would now be stale.
+  trackAiToken++;
+  clearTimeout(trackAiTimer);
+
   if (!term) return;
 
-  // Find matching suggestions
+  // Find matching hardcoded suggestions
   let matches = SUGGESTIONS[term] || [];
 
   // Also try partial matches — require >=3 chars and a prefix match so short
@@ -1563,18 +1703,46 @@ function showSuggestions() {
     }
   }
 
-  if (matches.length === 0) return;
-
   const has = (s) => trackTerms.some(x => x.toLowerCase() === s.toLowerCase());
-  matches.forEach(suggestion => {
+  const renderTermChip = (suggestion, ai) => {
     const isSel = has(suggestion);
     const chip = document.createElement('button');
-    chip.className = 'chip' + (isSel ? ' selected' : '');
+    chip.className = 'chip' + (ai ? ' chip-ai' : '') + (isSel ? ' selected' : '');
     chip.setAttribute('aria-pressed', isSel ? 'true' : 'false');
-    chip.textContent = isSel ? suggestion + ' ×' : '+ ' + suggestion;
+    if (isSel) {
+      chip.textContent = suggestion + ' ×';
+    } else if (ai) {
+      chip.innerHTML = '<span class="ai-spark">✨</span>' + escapeHtml('+ ' + suggestion);
+    } else {
+      chip.textContent = '+ ' + suggestion;
+    }
     chip.onclick = () => toggleTerm(suggestion);
     container.appendChild(chip);
-  });
+  };
+
+  matches.forEach(s => renderTermChip(s, false));
+
+  // Also pull AI-related terms for the typed word (debounced). Skip very short
+  // words, and append any AI suggestions not already shown as hardcoded chips.
+  if (rawTerm.trim().length >= 2) {
+    const token = trackAiToken;
+    const hint = document.createElement('span');
+    hint.className = 'ai-hint';
+    hint.textContent = 'finding related terms…';
+    container.appendChild(hint);
+
+    trackAiTimer = setTimeout(async () => {
+      const ai = await aiSuggest(rawTerm.trim());
+      if (token !== trackAiToken) return;   // user moved on — drop stale result
+      hint.remove();
+      const shown = new Set(matches.map(m => m.toLowerCase()));
+      ai.forEach(s => {
+        if (shown.has(s.toLowerCase())) return;
+        shown.add(s.toLowerCase());
+        renderTermChip(s, true);
+      });
+    }, 350);
+  }
 }
 
 // Add/remove a suggested wording from the track group. Leaves the typed word
@@ -1586,6 +1754,43 @@ function toggleTerm(term) {
   showSuggestions();
   updateUrl();
 }
+
+// ============================================
+// AI SUGGESTIONS
+// ============================================
+// Backend contract: GET /.netlify/functions/suggest?term=<urlencoded>
+//   -> always 200 JSON { "suggestions": ["term1", ...] } (4-6 strings, [] on failure).
+// We cache every result (including empties) by lowercased term so we never
+// re-hit the endpoint for the same word, and we never throw — on any error we
+// return [] so the UI degrades gracefully (e.g. while the function is un-deployed).
+const aiCache = new Map();
+
+async function aiSuggest(term) {
+  const key = String(term || '').trim().toLowerCase();
+  if (!key) return [];
+  if (aiCache.has(key)) return aiCache.get(key);
+  let out = [];
+  try {
+    const res = await fetch('/.netlify/functions/suggest?term=' + encodeURIComponent(key));
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.suggestions)) {
+        out = data.suggestions.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim());
+      }
+    }
+  } catch (e) {
+    out = [];
+  }
+  aiCache.set(key, out);
+  return out;
+}
+
+// Per-context debounce timers + a token so a stale in-flight call can't paint
+// suggestions for a word the user has since changed.
+let trackAiTimer = null;
+let trackAiToken = 0;
+let alsoAiTimer = null;
+let alsoAiToken = 0;
 
 // --- Exclude ---
 function renderExcludeChips() {
@@ -1841,9 +2046,12 @@ function wireConditionAdd(inputId, commit) {
   });
 }
 wireConditionAdd('alsoAddInput', commitAlsoTerm);
+// Live AI related-term suggestions as the user types into "Must also mention".
+document.getElementById('alsoAddInput').addEventListener('input', showAlsoSuggestions);
 wireConditionAdd('phraseAddInput', commitPhraseTerm);
 wireConditionAdd('excludeAddInput', commitExcludeTerm);
 wireConditionAdd('siteAddInput', commitSiteTerm);
+wireConditionAdd('exsiteAddInput', commitExSiteTerm);
 
 document.getElementById('langSelect').addEventListener('change', updateUrl);
 document.getElementById('countrySelect').addEventListener('change', updateUrl);
