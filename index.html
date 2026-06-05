@@ -200,6 +200,14 @@
     .chip.selected:hover {
       opacity: 0.85;
     }
+    /* Toggle chips (media titles + suggestions): hovering an UNselected chip must
+       not look identical to 'selected' — otherwise clicking to deselect leaves it
+       looking selected until the cursor moves off. Non-selected hover = subtle tint. */
+    .trusted-chips .chip:not(.selected):hover,
+    #suggestions .chip:not(.selected):hover {
+      background: rgba(53, 56, 205, 0.16);
+      color: var(--accent);
+    }
     .chip .chip-x {
       font-size: 0.7rem;
       margin-left: 0.15rem;
