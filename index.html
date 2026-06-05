@@ -1293,6 +1293,141 @@
     }
     .saved-feed-actions button:hover { border-color: var(--accent); color: var(--accent); }
     .saved-feed-actions .sf-del:hover { border-color: var(--red); color: var(--red); }
+
+    /* ============================================
+       WIZARD SHELL (guided 3-step + pinned preview)
+       ============================================ */
+    /* Slim the masthead a touch in wizard mode. */
+    .header { margin-bottom: 1.75rem; padding-bottom: 1.25rem; }
+    .header h1 { font-size: 2.4rem; }
+
+    /* Two-zone layout: wizard panel + pinned preview panel. */
+    .wizard-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .wizard-shell { grid-template-columns: 1fr; }
+    }
+    .wizard-panel { min-width: 0; }
+    .preview-panel { min-width: 0; }
+
+    /* Pinned preview sticks in view on desktop while stepping. */
+    @media (min-width: 901px) {
+      .preview-panel { position: sticky; top: 1.25rem; }
+    }
+
+    /* Step indicator: ① Track · ② Source · ③ Your feed */
+    .wiz-steps {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .wiz-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.7rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .wiz-step .wiz-step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.3rem;
+      height: 1.3rem;
+      border-radius: 50%;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border-strong);
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .wiz-step:hover:not(.current) { border-color: var(--border-strong); color: var(--text); }
+    .wiz-step.current {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .wiz-step.current .wiz-step-num {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .wiz-step.done .wiz-step-num {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .wiz-step[disabled] { cursor: default; opacity: 0.65; }
+    .wiz-step-sep { color: var(--text-dim); font-size: 0.8rem; }
+    @media (max-width: 600px) {
+      .wiz-step-label { display: none; }
+      .wiz-step { padding: 0.35rem; }
+    }
+
+    /* Each step is a card; only the current one shows. */
+    .wiz-step-section { display: none; }
+    .wiz-step-section.active { display: block; }
+
+    /* Wizard footer nav (Back / Next). */
+    .wiz-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .wiz-nav .btn { font-size: 0.88rem; }
+    .wiz-nav-spacer { flex: 1; }
+
+    /* Step ③ readback sentence */
+    .wiz-readback {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 1.1rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Pinned preview heading + compact URL */
+    .preview-panel .pinned-head {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+    .pinned-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--accent);
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.65rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .pinned-url.is-empty { color: var(--text-dim); }
   </style>
 </head>
 <body>
@@ -1308,6 +1443,27 @@
     </nav>
   </header>
 
+  <!-- Guided wizard shell: wizard panel (left) + pinned preview (right) -->
+  <div class="wizard-shell">
+  <div class="wizard-panel">
+
+  <!-- Step indicator: ① Track · ② Source · ③ Your feed -->
+  <div class="wiz-steps" id="wizSteps" role="tablist" aria-label="Feed builder steps">
+    <button type="button" class="wiz-step current" id="wizStep1Btn" data-step="1" onclick="goToStep(1)" aria-controls="step1">
+      <span class="wiz-step-num">1</span><span class="wiz-step-label">Track</span>
+    </button>
+    <span class="wiz-step-sep">·</span>
+    <button type="button" class="wiz-step" id="wizStep2Btn" data-step="2" onclick="goToStep(2)" aria-controls="step2">
+      <span class="wiz-step-num">2</span><span class="wiz-step-label">Source</span>
+    </button>
+    <span class="wiz-step-sep">·</span>
+    <button type="button" class="wiz-step" id="wizStep3Btn" data-step="3" onclick="goToStep(3)" aria-controls="step3">
+      <span class="wiz-step-num">3</span><span class="wiz-step-label">Your feed</span>
+    </button>
+  </div>
+
+  <!-- Step ①: What do you want to track? -->
+  <section class="wiz-step-section active" id="step1" role="tabpanel" aria-labelledby="wizStep1Btn">
   <!-- Step 1: Search -->
   <div class="card">
     <label class="card-label" for="searchInput">What do you want to track?</label>
@@ -1453,20 +1609,18 @@
     </div>
   </div>
 
-  <!-- Trusted titles (rendered only if the catalog endpoint is reachable) -->
-  <div class="card" id="trustedCard" style="display:none;">
-    <div class="trusted-head">
-      <span class="card-label" style="margin:0;">Trusted titles</span>
-      <button type="button" class="trusted-clear" id="trustedClear" style="display:none;" onclick="clearSources()">Clear selection · back to Broad index</button>
-    </div>
-    <p class="trusted-intro">Read these publishers' own feeds directly, filtered by your terms. Picking any switches your feed to these sources only.</p>
-    <div id="trustedGroups"></div>
-    <div class="trusted-note" id="trustedNote" style="display:none;"></div>
+  <!-- Step ① footer nav -->
+  <div class="wiz-nav">
+    <span class="wiz-nav-spacer"></span>
+    <button type="button" class="btn" id="wizNext1" onclick="goToStep(2)">Next: choose your source →</button>
   </div>
+  </section><!-- /#step1 -->
 
+  <!-- Step ②: Where should it look? -->
+  <section class="wiz-step-section" id="step2" role="tabpanel" aria-labelledby="wizStep2Btn">
   <!-- Step 2: Parameters -->
   <div class="card">
-    <div class="card-label">Source</div>
+    <div class="card-label">Where should it look?</div>
     <div class="source-modes" id="sourceModes">
       <button type="button" class="source-mode" id="mode-google" data-mode="google" onclick="setSourceMode('google')">
         <span class="sm-name">All news (recommended)</span>
@@ -1493,6 +1647,20 @@
       <span class="scope-explainer" id="scopeExplainer"></span>
     </div>
 
+    <!-- Trusted titles picker — shown (and Refine hidden) only in Trusted-titles mode.
+         Rendered only if the catalog endpoint is reachable; otherwise stays empty/hidden. -->
+    <div id="trustedBlock" style="display:none;">
+      <div class="trusted-head" style="margin-top:0.5rem;">
+        <span class="card-label" style="margin:0;">Trusted titles</span>
+        <button type="button" class="trusted-clear" id="trustedClear" style="display:none;" onclick="clearSources()">Clear selection · back to all news</button>
+      </div>
+      <p class="trusted-intro">Read these publishers' own feeds directly, filtered by your terms.</p>
+      <div id="trustedGroups"></div>
+      <div class="trusted-note" id="trustedNote" style="display:none;"></div>
+    </div>
+
+    <!-- Refine — shown only when reading All news (Google index); hidden for Trusted titles. -->
+    <div id="refineBlock">
     <div class="card-label" style="margin-top:0.5rem;">Refine</div>
     <div class="params-grid">
       <div class="param-group">
@@ -1551,11 +1719,24 @@
       </div>
     </div>
     <div class="refine-native-note" id="refineNativeNote" style="display:none;">Not used while reading trusted titles — those feeds come straight from the publishers.</div>
-  </div>
+    </div><!-- /#refineBlock -->
 
+    <!-- Step ② footer nav -->
+    <div class="wiz-nav">
+      <button type="button" class="btn btn-outline" id="wizBack2" onclick="goToStep(1)">← Back</button>
+      <span class="wiz-nav-spacer"></span>
+      <button type="button" class="btn" id="wizNext2" onclick="goToStep(3)">Next: get your feed →</button>
+    </div>
+  </div><!-- /card -->
+  </section><!-- /#step2 -->
+
+  <!-- Step ③: Your feed -->
+  <section class="wiz-step-section" id="step3" role="tabpanel" aria-labelledby="wizStep3Btn">
   <!-- Step 3: Your RSS URL -->
   <div class="card">
-    <div class="card-label">Your RSS feed</div>
+    <div class="card-label">Your feed</div>
+    <!-- Plain-English readback of what was built -->
+    <p class="wiz-readback" id="wizReadback"></p>
     <div class="url-output">
       <div class="url-box" id="urlBox">Describe a feed or add a term above to get started…</div>
       <button class="btn btn-sm" id="copyBtn" onclick="copyUrl()">Copy</button>
@@ -1571,19 +1752,33 @@
     </div>
   </div>
 
-  <!-- Step 4: Preview -->
-  <div class="card">
-    <div class="card-label">Preview</div>
-    <div id="previewArea">
-      <div class="preview-empty">Describe a feed or add a term above to see a live preview</div>
-    </div>
-  </div>
-
   <!-- Saved feeds (localStorage; organised into folders) -->
   <div class="card" id="savedCard" style="display:none;">
     <div class="card-label">Saved feeds</div>
     <div id="savedFeeds"></div>
   </div>
+
+  <!-- Step ③ footer nav -->
+  <div class="wiz-nav">
+    <button type="button" class="btn btn-outline" id="wizBack3" onclick="goToStep(2)">← Back</button>
+    <span class="wiz-nav-spacer"></span>
+  </div>
+  </section><!-- /#step3 -->
+
+  </div><!-- /.wizard-panel -->
+
+  <!-- Pinned live preview — outside the steps, always visible. -->
+  <aside class="preview-panel">
+    <div class="card">
+      <div class="pinned-head">Live preview</div>
+      <div class="pinned-url is-empty" id="pinnedUrl">Your RSS URL will appear here…</div>
+      <div id="previewArea">
+        <div class="preview-empty">Describe a feed or add a term above to see a live preview</div>
+      </div>
+    </div>
+  </aside><!-- /.preview-panel -->
+
+  </div><!-- /.wizard-shell -->
 
   <!-- Email digest section parked for now — removed from the UI.
        Full markup + JS (switchTab / renderEmailPreview / saveDigestConfig)
@@ -1938,6 +2133,20 @@ function updateUrl() {
   updateQueryPreview();
   reflectSourceMode();
 
+  // Mirror the URL compactly at the top of the pinned preview panel, and refresh
+  // the Step ③ plain-English readback.
+  const pinned = document.getElementById('pinnedUrl');
+  if (pinned) {
+    if (url) {
+      pinned.textContent = url;
+      pinned.classList.remove('is-empty');
+    } else {
+      pinned.textContent = 'Your RSS URL will appear here…';
+      pinned.classList.add('is-empty');
+    }
+  }
+  updateWizReadback();
+
   // Debounced preview
   clearTimeout(previewTimeout);
   if (url) {
@@ -1996,6 +2205,22 @@ function reflectSourceMode() {
     } else {
       cap.style.display = 'none';
     }
+  }
+
+  // Step ② progressive disclosure:
+  //   trusted — show the Trusted-titles picker, hide the Refine controls.
+  //   google / gdelt — show Refine, hide the picker.
+  // The trusted picker only appears once its catalog has loaded.
+  const trustedBlock = document.getElementById('trustedBlock');
+  const refineBlock = document.getElementById('refineBlock');
+  if (trustedBlock) {
+    trustedBlock.style.display = (sourceMode === 'trusted' && trustedCatalog.length) ? '' : 'none';
+  }
+  if (refineBlock) {
+    // Hide Refine in trusted mode only when the picker is actually available to
+    // replace it; otherwise keep Refine visible so the step isn't left empty.
+    const trustedAvailable = sourceMode === 'trusted' && trustedCatalog.length;
+    refineBlock.style.display = trustedAvailable ? 'none' : '';
   }
 }
 
@@ -2418,11 +2643,13 @@ async function loadTrustedCatalog() {
   } catch (e) {
     sources = [];
   }
-  if (!sources.length) return;   // degrade to nothing — card stays hidden
+  if (!sources.length) return;   // degrade to nothing — picker stays empty/hidden
 
   trustedCatalog = sources;
   renderTrustedPicker();
-  document.getElementById('trustedCard').style.display = '';
+  // Visibility of the trusted block is owned by reflectSourceMode() (it shows in
+  // Trusted-titles mode only). Re-run it so the picker appears if we're in that mode.
+  reflectSourceMode();
 }
 
 function renderTrustedPicker() {
@@ -2933,6 +3160,53 @@ function showToast(msg) {
 }
 
 // ============================================
+// WIZARD STEP CONTROLLER (guided 3-step)
+// ============================================
+// currentStep is 1–3. goToStep() shows the matching section, updates the
+// indicator, and tracks the furthest step reached so completed steps stay
+// clickable. The pinned preview panel lives outside the steps and never hides.
+let currentStep = 1;
+let maxStepReached = 1;
+
+function goToStep(n) {
+  n = Math.max(1, Math.min(3, n | 0));
+  currentStep = n;
+  if (n > maxStepReached) maxStepReached = n;
+
+  // Show only the matching step section.
+  [1, 2, 3].forEach(i => {
+    const sec = document.getElementById('step' + i);
+    if (sec) sec.classList.toggle('active', i === n);
+  });
+
+  // Update the indicator: current highlighted; reached-but-not-current = done
+  // and clickable; future steps disabled until reached.
+  [1, 2, 3].forEach(i => {
+    const btn = document.getElementById('wizStep' + i + 'Btn');
+    if (!btn) return;
+    btn.classList.toggle('current', i === n);
+    btn.classList.toggle('done', i < n || (i <= maxStepReached && i !== n));
+    const reachable = i <= maxStepReached;
+    btn.disabled = !reachable;
+    btn.setAttribute('aria-selected', i === n ? 'true' : 'false');
+  });
+
+  // Refresh the Step ③ readback when we land there.
+  if (n === 3) updateWizReadback();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Step ③ plain-English readback — mirror the live summary sentence (built by
+// updateSummary into #summarySentence, which is already XSS-safe).
+function updateWizReadback() {
+  const rb = document.getElementById('wizReadback');
+  if (!rb) return;
+  const summary = document.getElementById('summarySentence');
+  rb.innerHTML = summary ? summary.innerHTML
+    : '<span class="s-join">Add some terms to build your feed.</span>';
+}
+
+// ============================================
 // EVENT LISTENERS
 // ============================================
 
@@ -3092,7 +3366,7 @@ function loadSavedFeed(id) {
   const f = saved.feeds.find(x => x.id === id);
   if (!f) return;
   applyBuilderState(f.state);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  goToStep(3);   // a saved feed is already built — drop the user on the final step
   showToast('Loaded “' + f.name + '”');
 }
 
@@ -3234,9 +3508,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Init
+goToStep(1);            // default to Step ① and set the indicator state
 updateUrl();
 renderSavedFeeds();
-loadTrustedCatalog();   // renders the Trusted titles card only if the catalog loads
+loadTrustedCatalog();   // renders the Trusted titles picker only if the catalog loads
 
 // Focus the search box on load, but only on wider screens so mobile
 // doesn't get an unsolicited keyboard pop.
