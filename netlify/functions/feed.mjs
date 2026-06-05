@@ -90,6 +90,7 @@ const CATALOG = [
   { id: 'wsj-world',    name: 'WSJ (World)',         category: 'Business', url: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml' },
   { id: 'marketwatch',  name: 'MarketWatch',         category: 'Business', url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
   { id: 'bbc-business', name: 'BBC News (Business)', category: 'Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { id: 'bloomberg',    name: 'Bloomberg',           category: 'Business', url: 'https://feeds.bloomberg.com/markets/news.rss' },
 
   // --- Tech ---
   { id: 'techcrunch',   name: 'TechCrunch',          category: 'Tech',     url: 'https://techcrunch.com/feed/' },

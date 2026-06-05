@@ -1,6 +1,6 @@
 {
   "_about": "Curated UK news-source list for Pepo Feeds. 'curated' = the trusted/quality bundle (allowlist for inclusion). For an 'all UK news' mode use GDELT sourcecountry:UK + the denylist below + title-dedup, rather than trying to enumerate every local paper. Seeded from the NLA Media Access UK newspaper list (nationals + specialist titles), the legit entries of Prowly's UK top-100, plus broadcasters and major regionals. Domains verified by inspection; native-RSS availability + GDELT coverage to be confirmed at build time from the Netlify IP.",
-  "_native_rss_holdouts": ["thetimes.com", "telegraph.co.uk", "thesun.co.uk"],
+  "_native_rss_holdouts": ["thetimes.com", "telegraph.co.uk", "thesun.co.uk", "reuters.com", "apnews.com", "afp.com"],
   "_notes": "Times/Telegraph/Sun have no usable native RSS (paywalled/bot-blocked) -> reach via GDELT if it indexes them, else a narrow Google News site: fallback. FT has section RSS feeds. Everything else has working native RSS or is GDELT-reachable.",
   "curated": {
     "nationals": [
@@ -28,6 +28,10 @@
       {"name": "Channel 4 News", "domain": "channel4.com"},
       {"name": "GB News", "domain": "gbnews.com"},
       {"name": "LBC", "domain": "lbc.co.uk"},
+      {"name": "Reuters", "domain": "reuters.com"},
+      {"name": "Associated Press", "domain": "apnews.com"},
+      {"name": "Agence France-Presse", "domain": "afp.com"},
+      {"name": "Bloomberg", "domain": "bloomberg.com"},
       {"name": "PA Media", "domain": "pamediagroup.com"}
     ],
     "regional_city": [
