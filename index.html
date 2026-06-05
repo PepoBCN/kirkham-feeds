@@ -2498,7 +2498,8 @@ function clearSources() {
 // Snake_case category keys -> human labels, in display order.
 const SOURCE_CATEGORY_LABELS = {
   nationals: 'Nationals',
-  broadcasters_agencies: 'Broadcasters & agencies',
+  broadcasters_agencies: 'Broadcasters',
+  news_agencies: 'News agencies & wires',
   regional_city: 'Regional & city',
   business_finance: 'Business & finance',
   trade_specialist: 'Trade & specialist',
@@ -2507,7 +2508,7 @@ const SOURCE_CATEGORY_LABELS = {
 };
 // Holdouts we tag "via broad index": no native RSS, only reachable through GDELT.
 // (The Sun is in the JSON list but is now a native feed, so we don't tag it.)
-const RSS_HOLDOUT_TAGGED = new Set(['thetimes.com', 'telegraph.co.uk', 'reuters.com', 'apnews.com', 'afp.com']);
+const RSS_HOLDOUT_TAGGED = new Set(['thetimes.com', 'telegraph.co.uk', 'reuters.com', 'apnews.com', 'afp.com', 'dpa.com', 'efe.com', 'aa.com.tr', 'kyodonews.net', 'ptinews.com', 'pamediagroup.com', 'news.cn', 'tass.com']);
 
 let sourcesLoaded = false;
 

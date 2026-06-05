@@ -92,6 +92,11 @@ const CATALOG = [
   { id: 'bbc-business', name: 'BBC News (Business)', category: 'Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
   { id: 'bloomberg',    name: 'Bloomberg',           category: 'Business', url: 'https://feeds.bloomberg.com/markets/news.rss' },
 
+  // --- News agencies ---
+  { id: 'upi',          name: 'UPI',                 category: 'Agencies', url: 'https://www.upi.com/rss/top_news.rss' },
+  { id: 'ansa',         name: 'ANSA (English)',      category: 'Agencies', url: 'https://www.ansa.it/english/english_rss.xml' },
+  { id: 'yonhap',       name: 'Yonhap',              category: 'Agencies', url: 'https://en.yna.co.kr/RSS/news.xml' },
+
   // --- Tech ---
   { id: 'techcrunch',   name: 'TechCrunch',          category: 'Tech',     url: 'https://techcrunch.com/feed/' },
   { id: 'verge',        name: 'The Verge',           category: 'Tech',     url: 'https://www.theverge.com/rss/index.xml' },

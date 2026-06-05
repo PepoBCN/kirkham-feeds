@@ -1,6 +1,6 @@
 {
   "_about": "Curated UK news-source list for Pepo Feeds. 'curated' = the trusted/quality bundle (allowlist for inclusion). For an 'all UK news' mode use GDELT sourcecountry:UK + the denylist below + title-dedup, rather than trying to enumerate every local paper. Seeded from the NLA Media Access UK newspaper list (nationals + specialist titles), the legit entries of Prowly's UK top-100, plus broadcasters and major regionals. Domains verified by inspection; native-RSS availability + GDELT coverage to be confirmed at build time from the Netlify IP.",
-  "_native_rss_holdouts": ["thetimes.com", "telegraph.co.uk", "thesun.co.uk", "reuters.com", "apnews.com", "afp.com"],
+  "_native_rss_holdouts": ["thetimes.com", "telegraph.co.uk", "reuters.com", "apnews.com", "afp.com", "dpa.com", "efe.com", "aa.com.tr", "kyodonews.net", "ptinews.com", "pamediagroup.com", "news.cn", "tass.com"],
   "_notes": "Times/Telegraph/Sun have no usable native RSS (paywalled/bot-blocked) -> reach via GDELT if it indexes them, else a narrow Google News site: fallback. FT has section RSS feeds. Everything else has working native RSS or is GDELT-reachable.",
   "curated": {
     "nationals": [
@@ -27,12 +27,24 @@
       {"name": "ITV News", "domain": "itv.com"},
       {"name": "Channel 4 News", "domain": "channel4.com"},
       {"name": "GB News", "domain": "gbnews.com"},
-      {"name": "LBC", "domain": "lbc.co.uk"},
+      {"name": "LBC", "domain": "lbc.co.uk"}
+    ],
+    "news_agencies": [
       {"name": "Reuters", "domain": "reuters.com"},
       {"name": "Associated Press", "domain": "apnews.com"},
       {"name": "Agence France-Presse", "domain": "afp.com"},
       {"name": "Bloomberg", "domain": "bloomberg.com"},
-      {"name": "PA Media", "domain": "pamediagroup.com"}
+      {"name": "PA Media", "domain": "pamediagroup.com"},
+      {"name": "United Press International", "domain": "upi.com"},
+      {"name": "ANSA", "domain": "ansa.it"},
+      {"name": "Yonhap", "domain": "yna.co.kr"},
+      {"name": "dpa (Deutsche Presse-Agentur)", "domain": "dpa.com"},
+      {"name": "EFE", "domain": "efe.com"},
+      {"name": "Anadolu Agency", "domain": "aa.com.tr"},
+      {"name": "Kyodo News", "domain": "kyodonews.net"},
+      {"name": "Press Trust of India", "domain": "ptinews.com"},
+      {"name": "Xinhua", "domain": "news.cn"},
+      {"name": "TASS", "domain": "tass.com"}
     ],
     "regional_city": [
       {"name": "Manchester Evening News", "domain": "manchestereveningnews.co.uk"},
