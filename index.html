@@ -1029,16 +1029,18 @@
       gap: 1rem;
     }
     .header-nav a {
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--accent);
       text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
+      padding: 0.42rem 0.95rem;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      transition: color 0.15s, background-color 0.15s;
       cursor: pointer;
     }
-    .header-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .header-nav a:hover { color: #fff; background-color: var(--accent); }
 
     /* Source selector (Broad index / Trusted titles / Google News) */
     .source-modes {
@@ -1302,7 +1304,7 @@
     <h1>Pepo Feeds</h1>
     <p>Build a news RSS feed in plain English, preview it live, and copy it into any reader. No account needed.</p>
     <nav class="header-nav">
-      <a id="sourcesLink" role="button" tabindex="0" onclick="openSources()">Sources</a>
+      <a id="sourcesLink" role="button" tabindex="0" onclick="openSources()">Browse all sources</a>
     </nav>
   </header>
 
