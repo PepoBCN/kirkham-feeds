@@ -325,22 +325,6 @@ export default async (req) => {
       return wantJson ? jsonResponse({ articles: [] }) : rssResponse([]);
     }
 
-    // Temporary diagnostic: expose the exact query + raw GDELT response.
-    if (url.searchParams.get('debug')) {
-      const p = new URLSearchParams({
-        query, mode: 'ArtList', format: 'json',
-        maxrecords: String(Math.min(max * 2, 250)), sort: 'datedesc',
-      });
-      const gurl = `${GDELT_ENDPOINT}?${p.toString()}`;
-      let status = 0, snippet = '', err = '';
-      try {
-        const r = await fetch(gurl, { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json, */*' } });
-        status = r.status;
-        snippet = (await r.text()).slice(0, 400);
-      } catch (e) { err = String(e); }
-      return jsonResponse({ query, gurl, status, snippet, err }, 0);
-    }
-
     const raw = await callGdelt(query, max);
 
     const incDomSet = new Set(incDom);

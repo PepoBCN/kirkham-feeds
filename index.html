@@ -1699,7 +1699,7 @@ let trustedCatalog = [];   // [{id, name, category}, ...] once the catalog loads
 //   'gdelt'   — Broad index (GDELT), the default. Curated or all-UK scope.
 //   'trusted' — read selected publishers' own feeds (the existing picker).
 //   'google'  — Google News index (the original default).
-let sourceMode = 'gdelt';
+let sourceMode = 'google';
 let gdeltScope = 'curated';   // 'curated' (~100 vetted titles) | 'all' (every UK source minus junk)
 
 // ============================================
@@ -2480,10 +2480,10 @@ function toggleSource(id) {
   updateUrl();
 }
 
-// Drop all trusted-title selections → back to the Broad index.
+// Drop all trusted-title selections → back to Google News.
 function clearSources() {
   selectedSources = [];
-  sourceMode = 'gdelt';
+  sourceMode = 'google';
   renderTrustedPicker();
   updateUrl();
 }
