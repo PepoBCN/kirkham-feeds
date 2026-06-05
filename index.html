@@ -1021,6 +1021,202 @@
     @keyframes aiPulse { 0% { box-shadow: 0 0 0 2px var(--accent-dim); } 100% { box-shadow: 0 0 0 2px transparent; } }
     .ai-filled { animation: aiPulse 1.1s ease-out; }
 
+    /* Masthead nav (Sources link) */
+    .header-nav {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .header-nav a {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      cursor: pointer;
+    }
+    .header-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Source selector (Broad index / Trusted titles / Google News) */
+    .source-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 600px) { .source-modes { grid-template-columns: 1fr; } }
+    .source-mode {
+      text-align: left;
+      padding: 0.7rem 0.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .source-mode:hover { border-color: var(--border-strong); }
+    .source-mode.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .source-mode .sm-name {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .source-mode.active .sm-name { color: var(--accent); }
+    .source-mode .sm-sub {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: var(--text-muted);
+    }
+
+    /* Scope toggle (Curated vs All UK), shown only in Broad index mode */
+    .scope-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .scope-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .scope-toggle button {
+      padding: 0.35rem 0.85rem;
+      background: var(--bg-card);
+      border: none;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .scope-toggle button + button { border-left: 1px solid var(--border); }
+    .scope-toggle button.active { background: var(--accent); color: #fff; }
+    .scope-explainer {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* Sources view (full-width overlay) */
+    .sources-view {
+      display: none;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .sources-view.visible { display: block; }
+    body.sources-open .container { display: none; }
+    .sources-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--accent);
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+    }
+    .sources-back:hover { text-decoration: underline; }
+    .sources-view h1 {
+      font-family: var(--serif);
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.5rem;
+    }
+    .sources-intro {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      max-width: 42rem;
+      margin-bottom: 0.4rem;
+    }
+    .sources-count {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 1.75rem;
+    }
+    .src-group { margin-bottom: 1.75rem; }
+    .src-group-head {
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    .src-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1.5rem;
+    }
+    @media (max-width: 600px) { .src-list { grid-template-columns: 1fr; } }
+    .src-item {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+    }
+    .src-item a {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .src-item a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .src-domain {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+    .src-tag {
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--orange);
+      background: var(--orange-dim);
+      padding: 0.1rem 0.45rem;
+      border-radius: 100px;
+    }
+    .sources-filter-note {
+      margin-top: 1rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+    .sources-filter-note strong { color: var(--text); font-weight: 600; }
+    .sources-error {
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
     /* Save-feed form + saved feeds list */
     .save-form {
       display: flex;
@@ -1104,7 +1300,10 @@
   <header class="header">
     <div class="masthead-kicker">News monitoring</div>
     <h1>Pepo Feeds</h1>
-    <p>Build a Google News RSS feed in plain English, preview it live, and copy it into any reader. No account needed.</p>
+    <p>Build a news RSS feed in plain English, preview it live, and copy it into any reader. No account needed.</p>
+    <nav class="header-nav">
+      <a id="sourcesLink" role="button" tabindex="0" onclick="openSources()">Sources</a>
+    </nav>
   </header>
 
   <!-- Step 1: Search -->
@@ -1256,7 +1455,7 @@
   <div class="card" id="trustedCard" style="display:none;">
     <div class="trusted-head">
       <span class="card-label" style="margin:0;">Trusted titles</span>
-      <button type="button" class="trusted-clear" id="trustedClear" style="display:none;" onclick="clearSources()">Clear selection · back to Google News</button>
+      <button type="button" class="trusted-clear" id="trustedClear" style="display:none;" onclick="clearSources()">Clear selection · back to Broad index</button>
     </div>
     <p class="trusted-intro">Read these publishers' own feeds directly, filtered by your terms. Picking any switches your feed to these sources only.</p>
     <div id="trustedGroups"></div>
@@ -1265,7 +1464,32 @@
 
   <!-- Step 2: Parameters -->
   <div class="card">
-    <div class="card-label">Refine</div>
+    <div class="card-label">Source</div>
+    <div class="source-modes" id="sourceModes">
+      <button type="button" class="source-mode" id="mode-gdelt" data-mode="gdelt" onclick="setSourceMode('gdelt')">
+        <span class="sm-name">Broad index (recommended)</span>
+        <span class="sm-sub">All UK news, cleaned. Includes paywalled papers' headlines (Times, Telegraph).</span>
+      </button>
+      <button type="button" class="source-mode" id="mode-trusted" data-mode="trusted" onclick="setSourceMode('trusted')">
+        <span class="sm-name">Trusted titles</span>
+        <span class="sm-sub">Pick specific publishers and read their own feeds, filtered by your terms.</span>
+      </button>
+      <button type="button" class="source-mode" id="mode-google" data-mode="google" onclick="setSourceMode('google')">
+        <span class="sm-name">Google News</span>
+        <span class="sm-sub">Google's own index, with country and time-window controls.</span>
+      </button>
+    </div>
+
+    <!-- Scope toggle — Broad index only -->
+    <div class="scope-row" id="scopeRow" style="display:none;">
+      <span class="scope-toggle">
+        <button type="button" id="scope-curated" onclick="setScope('curated')">Curated quality sources</button>
+        <button type="button" id="scope-all" onclick="setScope('all')">All UK sources</button>
+      </span>
+      <span class="scope-explainer" id="scopeExplainer"></span>
+    </div>
+
+    <div class="card-label" style="margin-top:0.5rem;">Refine</div>
     <div class="params-grid">
       <div class="param-group">
         <label for="langSelect">Language</label>
@@ -1361,6 +1585,15 @@
        Full markup + JS (switchTab / renderEmailPreview / saveDigestConfig)
        and CSS (.digest-section, .email-preview, .tab-*) live in git history
        at commit 3a73924 and earlier, ready to reinstate later. -->
+</div>
+
+<!-- Sources view (toggled by the masthead "Sources" link) -->
+<div class="sources-view" id="sourcesView">
+  <button type="button" class="sources-back" onclick="closeSources()">← Back to the builder</button>
+  <h1>UK news sources</h1>
+  <p class="sources-intro">This is the curated UK news list the Broad index feeds are filtered to: the quality, vetted titles we'll show by default. You can also track any UK source through the broad index, just switch the scope to "All UK sources".</p>
+  <div class="sources-count" id="sourcesCount"></div>
+  <div id="sourcesBody"></div>
 </div>
 
 <!-- Toast -->
@@ -1461,6 +1694,13 @@ let previewTimeout = null;
 // which returns ONLY those publishers' feeds, keyword-filtered by the rules.
 let selectedSources = [];
 let trustedCatalog = [];   // [{id, name, category}, ...] once the catalog loads
+
+// Source mode: which engine the feed is built from.
+//   'gdelt'   — Broad index (GDELT), the default. Curated or all-UK scope.
+//   'trusted' — read selected publishers' own feeds (the existing picker).
+//   'google'  — Google News index (the original default).
+let sourceMode = 'gdelt';
+let gdeltScope = 'curated';   // 'curated' (~100 vetted titles) | 'all' (every UK source minus junk)
 
 // ============================================
 // SAFETY HELPERS
@@ -1588,6 +1828,41 @@ function isNativeUrl(url) {
   return typeof url === 'string' && url.indexOf('/.netlify/functions/feed') !== -1;
 }
 
+// True when the URL points at the GDELT (Broad index) function.
+function isGdeltUrl(url) {
+  return typeof url === 'string' && url.indexOf('/.netlify/functions/gdelt') !== -1;
+}
+
+// Map the Country control to the GDELT country param: UK / US / '' (worldwide).
+// Only UK and US are GDELT-filtered; any other country falls back to worldwide english.
+function gdeltCountryParam() {
+  const c = document.getElementById('countrySelect').value;
+  if (c === 'GB') return 'UK';
+  if (c === 'US') return 'US';
+  return '';   // Worldwide (WW) and everything else -> empty
+}
+
+// Broad index (GDELT) URL. The keyword filter mirrors the rule cards exactly:
+//   inc = [ trackGroup, ...andGroups, ...each phrase as its own group ]
+//   exc = exclude terms;  inc_dom = "only from" sites;  exc_dom = excluded sites.
+// Pass format=json for the preview; omit it for the subscribable RSS URL.
+function buildGdeltUrl(asJson) {
+  const inc = includeGroups().concat(phraseTerms.map(p => [p]));
+  if (!inc.length && !siteTerms.length) return '';   // GDELT needs a topic; bare site list isn't enough
+
+  const params = new URLSearchParams();
+  params.set('inc', JSON.stringify(inc));
+  params.set('exc', JSON.stringify(excludeTerms));
+  params.set('inc_dom', JSON.stringify(siteTerms));
+  params.set('exc_dom', JSON.stringify(excludeSiteTerms));
+  params.set('country', gdeltCountryParam());
+  params.set('scope', gdeltScope);
+  params.set('social', '1');
+  params.set('max', '60');
+  if (asJson) params.set('format', 'json');
+  return `${location.origin}/.netlify/functions/gdelt?${params.toString()}`;
+}
+
 // Hosted trusted-titles feed: only the selected publishers' feeds, keyword-filtered.
 // The keyword filter mirrors the rule cards: include OR-groups + each exact phrase
 // (as its own single-term group), and the exclude terms. Both are optional — a
@@ -1601,9 +1876,16 @@ function buildNativeUrl() {
 }
 
 function buildUrl() {
-  // Native (trusted-titles) mode needs only >=1 source; keyword filter optional.
-  if (selectedSources.length) return buildNativeUrl();
+  // Broad index (GDELT) mode.
+  if (sourceMode === 'gdelt') return buildGdeltUrl(false);
 
+  // Trusted-titles (native) mode needs >=1 source; keyword filter optional.
+  if (sourceMode === 'trusted') {
+    if (!selectedSources.length) return '';
+    return buildNativeUrl();
+  }
+
+  // Google News mode (default proxy).
   const query = buildQuery();
   if (!query) return '';
 
@@ -1643,7 +1925,7 @@ function updateUrl() {
 
   // Show the rule builder once there's a track term or any rule in play. In
   // trusted-titles mode keep it visible too, so terms can refine the source feeds.
-  const hasContent = trackTerms.length > 0 || getSearchTerm() !== '' || buildQuery() !== '' || selectedSources.length > 0;
+  const hasContent = trackTerms.length > 0 || getSearchTerm() !== '' || buildQuery() !== '' || (sourceMode === 'trusted' && selectedSources.length > 0);
   document.getElementById('queryControls').classList.toggle('visible', hasContent);
 
   // Keep the track chips, plain-English summary and technical query in sync.
@@ -1661,18 +1943,72 @@ function updateUrl() {
   }
 }
 
-// In trusted-titles (native) mode the Refine controls don't apply — dim them + caption.
+// Reflect the active source mode across the Source buttons, scope toggle and
+// the Refine controls (which apply differently per mode).
 function reflectSourceMode() {
-  const native = selectedSources.length > 0;
+  // Highlight the active mode button.
+  document.querySelectorAll('.source-mode').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === sourceMode);
+  });
+
+  // Scope toggle is Broad-index only.
+  const scopeRow = document.getElementById('scopeRow');
+  if (scopeRow) scopeRow.style.display = (sourceMode === 'gdelt') ? '' : 'none';
+  document.getElementById('scope-curated').classList.toggle('active', gdeltScope === 'curated');
+  document.getElementById('scope-all').classList.toggle('active', gdeltScope === 'all');
+  const exp = document.getElementById('scopeExplainer');
+  if (exp) {
+    exp.textContent = gdeltScope === 'curated'
+      ? 'Curated: ~100 vetted UK titles.'
+      : 'All: every UK news source GDELT sees, minus socials and PR wires.';
+  }
+
+  // Which Refine controls apply:
+  //   google  — language, country, time window all apply.
+  //   gdelt   — country applies; language and time window don't.
+  //   trusted — none apply (publishers' own feeds).
+  const applies = {
+    langSelect: sourceMode === 'google',
+    countrySelect: sourceMode === 'google' || sourceMode === 'gdelt',
+    whenSelect: sourceMode === 'google',
+  };
   ['langSelect', 'countrySelect', 'whenSelect'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.disabled = native;
-    el.style.opacity = native ? '0.45' : '';
-    el.setAttribute('aria-disabled', native ? 'true' : 'false');
+    const on = applies[id];
+    el.disabled = !on;
+    el.style.opacity = on ? '' : '0.45';
+    el.setAttribute('aria-disabled', on ? 'false' : 'true');
   });
+
   const cap = document.getElementById('refineNativeNote');
-  if (cap) cap.style.display = native ? '' : 'none';
+  if (cap) {
+    if (sourceMode === 'trusted') {
+      cap.textContent = 'Not used while reading trusted titles — those feeds come straight from the publishers.';
+      cap.style.display = '';
+    } else if (sourceMode === 'gdelt') {
+      cap.textContent = 'Broad index uses the Country filter only — language and time window don’t apply in this mode.';
+      cap.style.display = '';
+    } else {
+      cap.style.display = 'none';
+    }
+  }
+}
+
+// Switch source mode from the selector buttons.
+function setSourceMode(mode) {
+  if (mode !== 'gdelt' && mode !== 'trusted' && mode !== 'google') return;
+  sourceMode = mode;
+  // Leaving trusted mode shouldn't strand a hidden source selection driving the feed,
+  // but we keep the picks so toggling back restores them. The trusted card stays visible.
+  if (trustedCatalog.length) renderTrustedPicker();
+  updateUrl();
+}
+
+function setScope(scope) {
+  if (scope !== 'curated' && scope !== 'all') return;
+  gdeltScope = scope;
+  updateUrl();
 }
 
 function updateQueryPreview() {
@@ -1718,7 +2054,7 @@ function updateSummary() {
   const el = document.getElementById('summarySentence');
 
   // Trusted-titles mode: read which publishers we're reading + the keyword filter.
-  if (selectedSources.length) {
+  if (sourceMode === 'trusted' && selectedSources.length) {
     const names = selectedSources.map(id => {
       const s = trustedCatalog.find(x => x.id === id);
       return s ? s.name : id;
@@ -2137,15 +2473,138 @@ function toggleSource(id) {
   const i = selectedSources.indexOf(id);
   if (i >= 0) selectedSources.splice(i, 1);
   else selectedSources.push(id);
+  // Picking any publisher puts the app into trusted-titles mode; the Source
+  // selector reflects it. Clearing the last one drops back to the Broad index.
+  sourceMode = selectedSources.length ? 'trusted' : 'gdelt';
   renderTrustedPicker();
   updateUrl();
 }
 
-// Drop all trusted-title selections → back to the Google News feed.
+// Drop all trusted-title selections → back to the Broad index.
 function clearSources() {
   selectedSources = [];
+  sourceMode = 'gdelt';
   renderTrustedPicker();
   updateUrl();
+}
+
+// ============================================
+// SOURCES VIEW (the curated UK list, from /data/uk-sources.json)
+// ============================================
+// Snake_case category keys -> human labels, in display order.
+const SOURCE_CATEGORY_LABELS = {
+  nationals: 'Nationals',
+  broadcasters_agencies: 'Broadcasters & agencies',
+  regional_city: 'Regional & city',
+  business_finance: 'Business & finance',
+  trade_specialist: 'Trade & specialist',
+  current_affairs: 'Current affairs',
+  tech_science: 'Tech & science',
+};
+// Holdouts we tag "via broad index": no native RSS, only reachable through GDELT.
+// (The Sun is in the JSON list but is now a native feed, so we don't tag it.)
+const RSS_HOLDOUT_TAGGED = new Set(['thetimes.com', 'telegraph.co.uk']);
+
+let sourcesLoaded = false;
+
+function openSources() {
+  document.body.classList.add('sources-open');
+  document.getElementById('sourcesView').classList.add('visible');
+  window.scrollTo({ top: 0 });
+  if (!sourcesLoaded) loadSourcesView();
+}
+
+function closeSources() {
+  document.body.classList.remove('sources-open');
+  document.getElementById('sourcesView').classList.remove('visible');
+}
+
+async function loadSourcesView() {
+  const body = document.getElementById('sourcesBody');
+  const countEl = document.getElementById('sourcesCount');
+  let data = null;
+  try {
+    const res = await fetch('/data/uk-sources.json');
+    if (res.ok) data = await res.json();
+  } catch (e) { data = null; }
+
+  if (!data || !data.curated) {
+    body.innerHTML = '';
+    const err = document.createElement('div');
+    err.className = 'sources-error';
+    err.textContent = "Couldn't load the source list right now. Please try again later.";
+    body.appendChild(err);
+    return;
+  }
+  sourcesLoaded = true;
+  body.innerHTML = '';
+
+  let total = 0;
+
+  // Render each curated category in the labelled order, falling back for any
+  // unexpected keys so nothing is silently dropped.
+  const keys = Object.keys(SOURCE_CATEGORY_LABELS)
+    .filter(k => Array.isArray(data.curated[k]))
+    .concat(Object.keys(data.curated).filter(k => !(k in SOURCE_CATEGORY_LABELS) && Array.isArray(data.curated[k])));
+
+  keys.forEach(key => {
+    const outlets = data.curated[key];
+    if (!outlets || !outlets.length) return;
+    const group = document.createElement('div');
+    group.className = 'src-group';
+
+    const head = document.createElement('div');
+    head.className = 'src-group-head';
+    head.textContent = SOURCE_CATEGORY_LABELS[key] || key.replace(/_/g, ' ');
+    group.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'src-list';
+    outlets.forEach(o => {
+      if (!o || !o.name) return;
+      total++;
+      const item = document.createElement('div');
+      item.className = 'src-item';
+
+      const domain = String(o.domain || '').trim();
+      const link = document.createElement('a');
+      link.textContent = o.name;
+      const href = safeUrl(domain ? 'https://' + domain : '');
+      if (href) { link.href = href; link.target = '_blank'; link.rel = 'noopener'; }
+      item.appendChild(link);
+
+      if (domain) {
+        const dom = document.createElement('span');
+        dom.className = 'src-domain';
+        dom.textContent = domain;
+        item.appendChild(dom);
+      }
+
+      if (RSS_HOLDOUT_TAGGED.has(domain.toLowerCase())) {
+        const tag = document.createElement('span');
+        tag.className = 'src-tag';
+        tag.textContent = 'via broad index';
+        item.appendChild(tag);
+      }
+
+      list.appendChild(item);
+    });
+    group.appendChild(list);
+    body.appendChild(group);
+  });
+
+  countEl.textContent = '~100 curated UK titles';
+
+  // "What we filter out" footer — a few denylist examples so the junk-control reads as real.
+  const note = document.createElement('div');
+  note.className = 'sources-filter-note';
+  const strong = document.createElement('strong');
+  strong.textContent = 'What we filter out: ';
+  note.appendChild(strong);
+  note.appendChild(document.createTextNode(
+    'socials, PR wires and aggregators (X, Facebook, PR Newswire, EIN, MSN…) are dropped from every Broad index feed, so you only ever see real journalism.'
+  ));
+  body.appendChild(note);
 }
 
 // ============================================
@@ -2249,9 +2708,51 @@ async function fetchWithTimeout(u, ms) {
   }
 }
 
+// Fetch with an abort timeout, returning parsed JSON (or throwing).
+async function fetchJsonWithTimeout(u, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(u, { signal: ctrl.signal });
+    if (!res.ok) throw new Error('status ' + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchPreview(url) {
   const previewArea = document.getElementById('previewArea');
   previewArea.innerHTML = '<div class="preview-loading"><div class="spinner"></div><br>Fetching feed...</div>';
+
+  // Broad index (GDELT): fetch the JSON variant of the same feed and render directly.
+  if (isGdeltUrl(url)) {
+    const jsonUrl = buildGdeltUrl(true);
+    let data = null;
+    for (let attempt = 0; attempt < 2 && data === null; attempt++) {
+      try {
+        data = await fetchJsonWithTimeout(jsonUrl, 12000);
+      } catch (e) {
+        if (attempt === 0) await new Promise(r => setTimeout(r, 400));
+      }
+    }
+    if (data === null) {
+      previewArea.innerHTML = `<div class="preview-empty">Couldn't load a live preview, but your RSS URL is still valid. Paste it into your reader.</div>`;
+      return;
+    }
+    const list = Array.isArray(data.articles) ? data.articles : [];
+    articles = list.map(a => ({
+      title: a.title || '',
+      link: a.link || '',
+      pubDate: a.pubDate || '',
+      source: a.source || a.domain || '',
+      sourceUrl: a.domain ? 'https://' + a.domain : '',
+      sourceDomain: a.domain || '',
+      snippet: '',
+    }));
+    renderPreview();
+    return;
+  }
 
   let xmlText = null;
 
@@ -2397,9 +2898,9 @@ function renderPreview() {
     html += `<div style="padding: 0.75rem 0; color: var(--text-muted); font-size: 0.8rem;">+ ${articles.length - PREVIEW_LIMIT} more articles in the full feed</div>`;
   }
 
-  // Google News link — only meaningful for the Google News feed, not the
-  // trusted-titles (native) feed, so hide it in that mode.
-  if (!selectedSources.length) {
+  // Google News link — only meaningful in Google News mode, not the Broad index
+  // or trusted-titles feeds, so hide it elsewhere.
+  if (sourceMode === 'google') {
     html += `
       <a href="${gnSearchUrl}" target="_blank" rel="noopener" class="gn-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -2492,6 +2993,8 @@ function currentBuilderState() {
     siteTerms: [...siteTerms],
     excludeSiteTerms: [...excludeSiteTerms],
     selectedSources: [...selectedSources],
+    sourceMode,
+    gdeltScope,
     lang: document.getElementById('langSelect').value,
     country: document.getElementById('countrySelect').value,
     when: document.getElementById('whenSelect').value,
@@ -2516,6 +3019,10 @@ function applyBuilderState(s) {
   siteTerms = [...(s.siteTerms || [])];
   excludeSiteTerms = [...(s.excludeSiteTerms || [])];
   selectedSources = [...(s.selectedSources || [])];
+  // Back-compat: feeds saved before the Source selector existed default to
+  // trusted if they had sources, otherwise Google News (their old behaviour).
+  sourceMode = s.sourceMode || (selectedSources.length ? 'trusted' : 'google');
+  gdeltScope = s.gdeltScope === 'all' ? 'all' : 'curated';
   document.getElementById('searchInput').value = '';
   if (s.lang) document.getElementById('langSelect').value = s.lang;
   if (s.country) document.getElementById('countrySelect').value = s.country;
@@ -2532,7 +3039,7 @@ function applyBuilderState(s) {
 }
 
 function toggleSaveForm() {
-  if (!buildQuery() && !selectedSources.length) { showToast('Build a feed first'); return; }
+  if (!buildUrl()) { showToast('Build a feed first'); return; }
   const f = document.getElementById('saveForm');
   const showing = f.style.display !== 'none';
   f.style.display = showing ? 'none' : 'flex';
@@ -2710,6 +3217,15 @@ document.getElementById('aiInput').addEventListener('keydown', (e) => {
 document.getElementById('aiInput').addEventListener('input', () => {
   const st = document.getElementById('aiStatus');
   if (st.textContent) st.textContent = '';
+});
+
+// Sources link: keyboard activation (it's a link styled as a button).
+document.getElementById('sourcesLink').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSources(); }
+});
+// Escape closes the Sources view.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.body.classList.contains('sources-open')) closeSources();
 });
 
 // Init

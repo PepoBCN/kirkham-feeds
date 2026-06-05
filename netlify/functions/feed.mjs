@@ -64,6 +64,12 @@ const CATALOG = [
   { id: 'guardian-uk',  name: 'The Guardian (UK)',   category: 'UK',       url: 'https://www.theguardian.com/uk/rss' },
   { id: 'sky',          name: 'Sky News',            category: 'UK',       url: 'https://feeds.skynews.com/feeds/rss/home.xml' },
   { id: 'independent',  name: 'The Independent (UK)',category: 'UK',       url: 'https://www.independent.co.uk/news/uk/rss' },
+  { id: 'sun',          name: 'The Sun',             category: 'UK',       url: 'https://www.thesun.co.uk/feed/' },
+  { id: 'mail',         name: 'Daily Mail',          category: 'UK',       url: 'https://www.dailymail.co.uk/articles.rss' },
+  { id: 'mirror',       name: 'Daily Mirror',        category: 'UK',       url: 'https://www.mirror.co.uk/?service=rss' },
+  { id: 'express',      name: 'Daily Express',       category: 'UK',       url: 'https://www.express.co.uk/posts/rss/1/news' },
+  { id: 'metro',        name: 'Metro',               category: 'UK',       url: 'https://metro.co.uk/feed/' },
+  { id: 'standard',     name: 'Evening Standard',    category: 'UK',       url: 'https://www.standard.co.uk/rss' },
 
   // --- US ---
   { id: 'nyt',          name: 'The New York Times',  category: 'US',       url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
