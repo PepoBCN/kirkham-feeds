@@ -73,7 +73,7 @@ const CATALOG = [
 
   // --- US ---
   { id: 'nyt',          name: 'The New York Times',  category: 'US',       url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
-  { id: 'washpost',     name: 'The Washington Post', category: 'US',       url: 'https://feeds.washingtonpost.com/rss/world' },
+  { id: 'washpost',     name: 'The Washington Post', category: 'US',       url: 'https://feeds.washingtonpost.com/rss/homepage' },
   { id: 'cnn',          name: 'CNN',                 category: 'US',       url: 'http://rss.cnn.com/rss/cnn_topstories.rss' },
   { id: 'foxnews',      name: 'Fox News',            category: 'US',       url: 'https://moxie.foxnews.com/google-publisher/latest.xml' },
   { id: 'abcnews',      name: 'ABC News',            category: 'US',       url: 'https://abcnews.go.com/abcnews/topstories' },
