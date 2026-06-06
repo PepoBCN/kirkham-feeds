@@ -73,10 +73,19 @@ const CATALOG = [
 
   // --- US ---
   { id: 'nyt',          name: 'The New York Times',  category: 'US',       url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
-  { id: 'npr',          name: 'NPR News',            category: 'US',       url: 'https://feeds.npr.org/1001/rss.xml' },
-  { id: 'foxnews',      name: 'Fox News',            category: 'US',       url: 'https://moxie.foxnews.com/google-publisher/latest.xml' },
   { id: 'washpost',     name: 'The Washington Post', category: 'US',       url: 'https://feeds.washingtonpost.com/rss/world' },
+  { id: 'cnn',          name: 'CNN',                 category: 'US',       url: 'http://rss.cnn.com/rss/cnn_topstories.rss' },
+  { id: 'foxnews',      name: 'Fox News',            category: 'US',       url: 'https://moxie.foxnews.com/google-publisher/latest.xml' },
+  { id: 'abcnews',      name: 'ABC News',            category: 'US',       url: 'https://abcnews.go.com/abcnews/topstories' },
+  { id: 'cbsnews',      name: 'CBS News',            category: 'US',       url: 'https://www.cbsnews.com/latest/rss/main' },
+  { id: 'nbcnews',      name: 'NBC News',            category: 'US',       url: 'https://feeds.nbcnews.com/nbcnews/public/news' },
+  { id: 'npr',          name: 'NPR News',            category: 'US',       url: 'https://feeds.npr.org/1001/rss.xml' },
   { id: 'politico',     name: 'Politico',            category: 'US',       url: 'https://rss.politico.com/politics-news.xml' },
+  { id: 'thehill',      name: 'The Hill',            category: 'US',       url: 'https://thehill.com/rss/syndicator/19110' },
+  { id: 'axios',        name: 'Axios',               category: 'US',       url: 'https://api.axios.com/feed/' },
+  { id: 'latimes',      name: 'Los Angeles Times',   category: 'US',       url: 'https://www.latimes.com/rss2.0.xml' },
+  { id: 'atlantic',     name: 'The Atlantic',        category: 'US',       url: 'https://www.theatlantic.com/feed/all/' },
+  { id: 'newyorker',    name: 'The New Yorker',      category: 'US',       url: 'https://www.newyorker.com/feed/news' },
 
   // --- World ---
   { id: 'bbc-world',    name: 'BBC News (World)',    category: 'World',    url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },

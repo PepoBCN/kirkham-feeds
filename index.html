@@ -1806,8 +1806,8 @@
 <!-- Sources view (toggled by the masthead "Sources" link) -->
 <div class="sources-view" id="sourcesView">
   <button type="button" class="sources-back" onclick="closeSources()">← Back to the builder</button>
-  <h1>UK news sources</h1>
-  <p class="sources-intro">This is the curated UK news list the Broad index feeds are filtered to: the quality, vetted titles we'll show by default. You can also track any UK source through the broad index, just switch the scope to "All UK sources".</p>
+  <h1>News sources</h1>
+  <p class="sources-intro">The curated UK and US news titles, plus the global agencies and wires, that we treat as quality journalism. Anything outside this list still surfaces through "All news", which searches the whole index. Titles tagged "via broad search" have no native feed (paywalled or no RSS), so they only appear that way.</p>
   <div class="sources-count" id="sourcesCount"></div>
   <div id="sourcesBody"></div>
 </div>
@@ -2741,10 +2741,12 @@ function clearSources() {
 // ============================================
 // Snake_case category keys -> human labels, in display order.
 const SOURCE_CATEGORY_LABELS = {
-  nationals: 'Nationals',
-  broadcasters_agencies: 'Broadcasters',
+  nationals: 'UK nationals',
+  broadcasters_agencies: 'UK broadcasters',
   news_agencies: 'News agencies & wires',
-  regional_city: 'Regional & city',
+  us_nationals: 'US nationals',
+  us_broadcasters: 'US broadcasters',
+  regional_city: 'UK regional & city',
   business_finance: 'Business & finance',
   trade_specialist: 'Trade & specialist',
   current_affairs: 'Current affairs',
@@ -2752,7 +2754,7 @@ const SOURCE_CATEGORY_LABELS = {
 };
 // Holdouts we tag "via broad index": no native RSS, only reachable through GDELT.
 // (The Sun is in the JSON list but is now a native feed, so we don't tag it.)
-const RSS_HOLDOUT_TAGGED = new Set(['thetimes.com', 'telegraph.co.uk', 'reuters.com', 'apnews.com', 'afp.com', 'dpa.com', 'efe.com', 'aa.com.tr', 'kyodonews.net', 'ptinews.com', 'pamediagroup.com', 'news.cn', 'tass.com']);
+const RSS_HOLDOUT_TAGGED = new Set(['thetimes.com', 'telegraph.co.uk', 'reuters.com', 'apnews.com', 'afp.com', 'dpa.com', 'efe.com', 'aa.com.tr', 'kyodonews.net', 'ptinews.com', 'pamediagroup.com', 'news.cn', 'tass.com', 'usatoday.com', 'newsweek.com', 'msnbc.com', 'pbs.org']);
 
 let sourcesLoaded = false;
 
@@ -2842,7 +2844,10 @@ async function loadSourcesView() {
     body.appendChild(group);
   });
 
-  countEl.textContent = '~100 curated UK titles';
+  const totalTitles = Object.values(data.curated)
+    .filter(Array.isArray)
+    .reduce((n, arr) => n + arr.length, 0);
+  countEl.textContent = `${totalTitles} curated UK & US titles`;
 
   // "What we filter out" footer — a few denylist examples so the junk-control reads as real.
   const note = document.createElement('div');
