@@ -18,7 +18,7 @@
  */
 
 const MAX_TEXT = 600;
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = 'claude-sonnet-4-6';
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 const json = (obj) =>
@@ -84,15 +84,22 @@ export default async (req) => {
     const current = body.current && typeof body.current === 'object' ? body.current : null;
 
     const system =
-      `You convert a plain-English description of a news feed into a structured query for Google News. ` +
+      `You convert a short description or keywords for a news feed into a structured Google News query. ` +
       `Output ONLY a JSON object (no prose, no markdown, no code fences) with these keys, all arrays of short strings:\n` +
-      `- "trackTerms": main entities/topics to track. OR'd: an article matches if it mentions ANY.\n` +
-      `- "andGroups": array of ONE extra requirement group (an array of OR'd terms) that must ALSO be matched. Use for "must also mention X or Y". Return [] if none, or a single group like [["earnings","layoffs"]].\n` +
-      `- "phraseTerms": exact phrases that must appear verbatim.\n` +
-      `- "excludeTerms": words/topics to hide. Expand vague intent into a few concrete terms (e.g. "opinion pieces" -> ["opinion","op-ed","editorial"], "rumours" -> ["rumour","rumor","speculation"]).\n` +
-      `- "siteTerms": domains to restrict TO (only-from). Infer domains from publisher names ("from the BBC and Guardian" -> ["bbc.co.uk","theguardian.com"]).\n` +
-      `- "excludeSiteTerms": domains to EXCLUDE. For "exclude X's own site" / "not from their website", infer the company/brand domain (Tesla -> tesla.com, Apple -> apple.com).\n` +
-      `Rules: keep terms short and lowercase unless they're proper names. "X and Y" as entities to track usually means OR (either). Map publisher/company names to bare domains (no www, no https). ` +
+      `- "trackTerms": the main SUBJECT(s) of the feed — the person, org, team, place or thing it is about. OR'd: an article matches if it mentions ANY.\n` +
+      `- "andGroups": an array of AT MOST ONE extra requirement group (an array of OR'd terms) the article must ALSO mention. Use this to narrow the subject to a topic/aspect. Return [] if there is only a subject.\n` +
+      `- "phraseTerms": exact multi-word phrases that must appear verbatim.\n` +
+      `- "excludeTerms": words to hide. ONLY fill this when the user EXPLICITLY asks to remove something (words like "exclude", "without", "no", "not", "ignore", "hide", "minus", "except"). Otherwise this MUST be []. \n` +
+      `- "siteTerms": domains to restrict TO (only-from). Infer from publisher names ("from the BBC and Guardian" -> ["bbc.co.uk","theguardian.com"]).\n` +
+      `- "excludeSiteTerms": domains to EXCLUDE. For "exclude X's own site" / "not from their website", infer the company/brand domain (Tesla -> tesla.com).\n` +
+      `CRITICAL RULES:\n` +
+      `1. Copy the user's words VERBATIM into terms. NEVER correct spelling, translate, or alter a proper noun — if they type "Arsenal" output "Arsenal" (never "Arenal"); keep their casing for names.\n` +
+      `2. NEVER invent exclusions. Words that describe the KIND of coverage wanted — "gossip", "goss", "rumours", "news", "latest", "updates", "analysis", "opinion", "reaction", "talk" — are NOT exclusions; they tell you what the user WANTS. Only exclude when the user explicitly says to (see the excludeTerms rule).\n` +
+      `3. Choose structure by intent:\n` +
+      `   - SUBJECT + ASPECT ("Arsenal transfer goss", "Tesla earnings", "Labour immigration policy") -> put the subject in trackTerms and the aspect in andGroups so BOTH must appear. e.g. "Arsenal transfer goss" -> trackTerms ["Arsenal"], andGroups [["transfer","transfers","signing","deal","bid"]].\n` +
+      `   - SYNONYMS / ALIASES for one thing, or a list of similar entities -> OR them together in trackTerms (e.g. ["Arsenal","Arsenal FC","Gunners"]).\n` +
+      `   - Do NOT dump every word into trackTerms as OR — that broadens the feed to anything mentioning any single word.\n` +
+      `4. Keep terms short; you may expand an ASPECT into a few helpful synonyms inside its andGroup (transfer -> transfer, signing, deal, bid). Map publisher/company names to bare domains (no www, no https).\n` +
       (current
         ? `A CURRENT state is provided; APPLY the user's instruction to it (add or remove items) and return the FULL updated state. If the instruction is a brand-new complete description, replace it instead.`
         : `Return the state for this description.`);
@@ -113,7 +120,7 @@ export default async (req) => {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: 500,
-          temperature: 0.2,
+          temperature: 0.1,
           system,
           messages: [{ role: 'user', content: userMsg }],
         }),
