@@ -1908,9 +1908,10 @@ function isGuardianOnly() {
 }
 
 // Relative endpoint path for the current feed, or '' if there's no feed.
-//   no positive term            -> '' (empty-state, unchanged)
-//   Guardian-only publisher     -> /.netlify/functions/guardian?q=...  (deep archive)
-//   otherwise                   -> /.netlify/functions/fetch-rss?url=<Google News>
+//   no positive term         -> '' (empty-state)
+//   Guardian-only publisher  -> /guardian?q=...                 (deep full archive)
+//   other specific publisher -> /fetch-rss?url=<Google News>    (respect the site: filter only)
+//   no publisher (broad)     -> /feed?gn=...&q=...              (Google News + deep Guardian+NYT, merged & de-duped)
 function feedPath() {
   if (buildQuery() === '') return '';
   if (isGuardianOnly()) {
@@ -1918,7 +1919,13 @@ function feedPath() {
     // (historical mentions). Readers sort by pubDate, so newest still shows first.
     return '/.netlify/functions/guardian?q=' + encodeURIComponent(buildGuardianQuery());
   }
-  return '/.netlify/functions/fetch-rss?url=' + encodeURIComponent(buildUrl());
+  if (siteTerms.length > 0) {
+    // A specific publisher restriction — keep it pure (no deep-source merge).
+    return '/.netlify/functions/fetch-rss?url=' + encodeURIComponent(buildUrl());
+  }
+  // Truly broad: Google News breadth + the most relevant Guardian/NYT, merged & de-duped.
+  return '/.netlify/functions/feed?gn=' + encodeURIComponent(buildUrl()) +
+    '&q=' + encodeURIComponent(buildGuardianQuery());
 }
 
 // Build the subscribable Google News RSS URL from the compiled query + Country/Time.
