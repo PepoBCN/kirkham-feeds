@@ -5,17 +5,6 @@
 [functions]
   node_bundler = "esbuild"
 
-# Pretty URL for the Sources page: serve the SPA at /sources (200 rewrite, URL stays /sources).
-[[redirects]]
-  from = "/sources"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/sources/*"
-  to = "/index.html"
-  status = 200
-
 [[headers]]
   for = "/*"
   [headers.values]
