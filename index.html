@@ -1365,6 +1365,60 @@
       color: var(--text-muted);
       margin-top: 0.1rem;
     }
+
+    /* Card header row: label on the left, optional action on the right. */
+    .card-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-label-row .card-label { margin-bottom: 0; }
+    /* Subtle text-button (Clear / New search). */
+    .text-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+    .text-btn:hover { color: var(--accent); text-decoration: underline; }
+
+    /* Brand-site exclude suggestions under "All of these words". */
+    .brand-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+    .brand-suggestions:empty { margin-top: 0; }
+    .brand-suggest {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.7rem;
+      background: transparent;
+      border: 1px dashed var(--border-strong);
+      border-radius: 100px;
+      font-size: 0.76rem;
+      font-family: inherit;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .brand-suggest:hover { border-color: var(--red); color: var(--red); }
+    .brand-suggest .bs-x { font-weight: 700; }
+    .brand-suggest .bs-domain { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+
+    /* Primary "Save feed" affordance next to the RSS URL. */
+    .btn-save { gap: 0.3rem; }
+    .btn-save .save-star { font-size: 0.85rem; line-height: 1; }
   </style>
 </head>
 <body>
@@ -1379,7 +1433,10 @@
 
   <!-- ============ THE FORM — Build your feed ============ -->
   <div class="card">
-    <div class="card-label">Build your feed</div>
+    <div class="card-label-row">
+      <div class="card-label">Build your feed</div>
+      <button type="button" class="text-btn" id="clearAllBtn" onclick="clearAll()">New search</button>
+    </div>
 
     <!-- All of these words (AND) -->
     <div class="form-field">
@@ -1390,6 +1447,8 @@
         <input type="text" id="searchInput" placeholder="e.g. Arsenal" aria-label="All of these words" autocomplete="off">
       </div>
       <div class="suggestions" id="suggestions"></div>
+      <!-- One-click "exclude the brand's own site" suggestions (opt-in). -->
+      <div class="brand-suggestions" id="brandSuggestions"></div>
     </div>
 
     <!-- Any of these words (OR) -->
@@ -1501,8 +1560,8 @@
     <div class="card-label">Your feed</div>
     <div class="url-output">
       <div class="url-box" id="urlBox">Add a term above to get started…</div>
-      <button class="btn btn-sm" id="copyBtn" onclick="copyUrl()">Copy</button>
-      <button class="btn btn-sm btn-outline" id="saveBtn" onclick="toggleSaveForm()">Save</button>
+      <button class="btn btn-sm btn-outline" id="copyBtn" onclick="copyUrl()">Copy</button>
+      <button class="btn btn-sm btn-save" id="saveBtn" onclick="toggleSaveForm()"><span class="save-star" aria-hidden="true">★</span> Save feed</button>
       <span class="copied-msg" id="copiedMsg">Copied</span>
     </div>
     <!-- Inline "save this feed" form -->
@@ -1834,6 +1893,7 @@ function updateUrl() {
   renderExSiteChips();
   updateSummary();
   updateQueryPreview();
+  renderBrandSuggestions();
 
   // Debounced preview
   clearTimeout(previewTimeout);
@@ -1854,6 +1914,99 @@ function updateQueryPreview() {
     .replace(/\bOR\b/g, '<span class="qp-op">OR</span>')
     .replace(/(^|\s)(-(?:&quot;[^&]*&quot;|[^\s]+))/g, '$1<span class="qp-not">$2</span>');
   previewText.innerHTML = highlighted;
+}
+
+// ============================================
+// BRAND-SITE EXCLUDE SUGGESTIONS (opt-in)
+// ============================================
+// When the user tracks a single-word brand/entity in "All of these words"
+// (e.g. "Arsenal"), offer a one-click suggestion to drop that brand's own
+// website (guessed as <word>.com) from the results, so they get coverage
+// ABOUT the brand, not FROM it. Multi-word terms (e.g. "Keir Starmer") are
+// skipped — they're people/topics, not a guessable single domain. Never
+// auto-applied: it's a subtle suggestion the user clicks.
+function brandDomainFor(term) {
+  return String(term).trim().toLowerCase() + '.com';
+}
+function renderBrandSuggestions() {
+  const container = document.getElementById('brandSuggestions');
+  if (!container) return;
+  container.innerHTML = '';
+  // Only committed single-word "All of these words" chips qualify.
+  const seen = new Set();
+  allTerms.forEach(term => {
+    const t = String(term).trim();
+    if (!t || /\s/.test(t)) return;           // skip blanks + multi-word terms
+    const domain = brandDomainFor(t);
+    if (seen.has(domain)) return;
+    seen.add(domain);
+    // Hide if this domain is already excluded (the suggestion's job is done).
+    if (excludeSiteTerms.some(s => String(s).trim().toLowerCase() === domain)) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'brand-suggest';
+    btn.setAttribute('aria-label', 'Exclude ' + domain + ' from results');
+    const x = document.createElement('span');
+    x.className = 'bs-x';
+    x.textContent = '✕';
+    const label = document.createElement('span');
+    label.textContent = 'exclude ';
+    const dom = document.createElement('span');
+    dom.className = 'bs-domain';
+    dom.textContent = domain;
+    btn.appendChild(x);
+    btn.appendChild(label);
+    btn.appendChild(dom);
+    btn.onclick = () => { addExSiteTerm(domain); };   // updateUrl re-renders, dropping this suggestion
+    container.appendChild(btn);
+  });
+}
+
+// ============================================
+// CLEAR / NEW SEARCH
+// ============================================
+// True if any chip array, input box or non-default toggle/select holds content.
+function formHasContent() {
+  if (allTerms.length || anyTerms.length || phraseTerms.length ||
+      excludeTerms.length || siteTerms.length || excludeSiteTerms.length) return true;
+  const ids = ['searchInput', 'anyAddInput', 'phraseAddInput', 'excludeAddInput', 'siteAddInput', 'exsiteAddInput'];
+  if (ids.some(id => (document.getElementById(id)?.value || '').trim())) return true;
+  if (!cleanFeed) return true;                                   // toggled off the default
+  if (document.getElementById('countrySelect').value !== 'GB') return true;
+  if (document.getElementById('whenSelect').value !== '1d') return true;
+  return false;
+}
+
+// Reset ALL builder state back to the same defaults the form loads with,
+// re-render every field, and clear the preview / RSS URL. Confirms first only
+// when something would actually be lost.
+function clearAll() {
+  if (formHasContent()) {
+    if (!confirm('Start a new feed? This clears everything.')) return;
+  }
+  allTerms = [];
+  anyTerms = [];
+  phraseTerms = [];
+  excludeTerms = [];
+  siteTerms = [];
+  excludeSiteTerms = [];
+  articles = [];
+  cleanFeed = true;                                             // default: ON
+  document.getElementById('cleanFeedToggle').checked = true;
+  ['searchInput', 'anyAddInput', 'phraseAddInput', 'excludeAddInput', 'siteAddInput', 'exsiteAddInput']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('countrySelect').value = 'GB';        // default country
+  document.getElementById('whenSelect').value = '1d';           // default time window
+  document.getElementById('anySuggestions').innerHTML = '';
+  hideTypeahead('siteTypeahead', 'siteAddInput');
+  hideTypeahead('exsiteTypeahead', 'exsiteAddInput');
+  // Hide the save form if it was open.
+  document.getElementById('saveForm').style.display = 'none';
+  renderAllChips(); renderAnyChips(); renderPhraseChips();
+  renderExcludeChips(); renderSiteChips(); renderExSiteChips();
+  showSuggestions();   // clears the (now empty) suggestion row
+  updateUrl();         // resets URL box + preview + summary + brand suggestions
+  document.getElementById('searchInput').focus();
 }
 
 // ============================================
