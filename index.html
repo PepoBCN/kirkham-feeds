@@ -1311,6 +1311,60 @@
       font-weight: 600;
       margin-bottom: 1rem;
     }
+
+    /* "Clean feed" toggle — a labelled switch above the Narrow-by row. */
+    .clean-toggle {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin-top: 1.4rem;
+      padding: 0.75rem 0.85rem;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .clean-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .clean-switch {
+      flex-shrink: 0;
+      position: relative;
+      width: 2.2rem;
+      height: 1.25rem;
+      margin-top: 0.1rem;
+      background: var(--border-strong);
+      border-radius: 100px;
+      transition: background 0.18s;
+    }
+    .clean-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: calc(1.25rem - 4px);
+      height: calc(1.25rem - 4px);
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(20,20,30,0.25);
+      transition: transform 0.18s;
+    }
+    .clean-toggle input:checked + .clean-switch { background: var(--accent); }
+    .clean-toggle input:checked + .clean-switch::after { transform: translateX(0.95rem); }
+    .clean-toggle input:focus-visible + .clean-switch {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .clean-text { line-height: 1.4; }
+    .clean-text .clean-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .clean-text .clean-sub {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
   </style>
 </head>
 <body>
@@ -1394,6 +1448,16 @@
         <div class="typeahead-menu" id="exsiteTypeahead" role="listbox"></div>
       </div>
     </div>
+
+    <!-- Clean feed toggle (ON by default): strips PR wires, socials, aggregators. -->
+    <label class="clean-toggle" for="cleanFeedToggle">
+      <input type="checkbox" id="cleanFeedToggle" checked>
+      <span class="clean-switch" aria-hidden="true"></span>
+      <span class="clean-text">
+        <span class="clean-label">Clean feed</span>
+        <span class="clean-sub">Hide PR wires, social media and aggregators — just real coverage.</span>
+      </span>
+    </label>
 
     <!-- Narrow by: Country + Time window (always applies) -->
     <div class="form-field" style="margin-top:1.4rem;">
@@ -1565,6 +1629,21 @@ let excludeSiteTerms = [];  // publisher domains to exclude (compiled to -site: 
 let articles = [];
 let previewTimeout = null;
 
+// "Clean feed" mode (ON by default): when on, the query additionally excludes a
+// built-in list of junk domains (socials, PR wires, aggregators) so the feed is
+// real coverage only. These are compiled to -site: filters at query-build time —
+// they are NOT added to the user's excludeSiteTerms array, so the user's own
+// exclusions stay untouched and the toggle can be flipped non-destructively.
+let cleanFeed = true;
+const JUNK_DOMAINS = [
+  // socials
+  'twitter.com','x.com','facebook.com','instagram.com','reddit.com','youtube.com','tiktok.com','linkedin.com','pinterest.com','threads.net',
+  // PR wires
+  'prnewswire.com','businesswire.com','globenewswire.com','einnews.com','einpresswire.com','prweb.com','newswire.com','responsesource.com','accesswire.com',
+  // aggregators / non-original
+  'msn.com','news.yahoo.com','finance.yahoo.com','flipboard.com'
+];
+
 // Everything is Google News with site: filters now. The trusted-titles
 // (native /feed) path and the GDELT broad-index path are dropped from the UI;
 // their backend code stays in the repo, just unused. sourceMode is pinned to
@@ -1689,6 +1768,16 @@ function buildQuery() {
     const domain = String(s).trim();
     if (domain) fragments.push('-site:' + domain);
   });
+
+  // 3c. Clean-feed junk exclusions (built-in, only when the toggle is ON).
+  // Appended at compile time in addition to the user's own excludeSiteTerms,
+  // skipping any domain the user already excluded so we don't double up.
+  if (cleanFeed) {
+    const already = new Set(excludeSiteTerms.map(s => String(s).trim().toLowerCase()));
+    JUNK_DOMAINS.forEach(d => {
+      if (!already.has(d)) fragments.push('-site:' + d);
+    });
+  }
 
   // 4. Exclusions last (-term).
   excludeTerms.forEach(t => {
@@ -2540,6 +2629,12 @@ wirePublisherField('exsiteAddInput', 'exsiteTypeahead', addExSiteTerm, commitExS
 document.getElementById('countrySelect').addEventListener('change', updateUrl);
 document.getElementById('whenSelect').addEventListener('change', updateUrl);
 
+// Clean-feed toggle: rebuilds the query/URL + preview when flipped.
+document.getElementById('cleanFeedToggle').addEventListener('change', (e) => {
+  cleanFeed = e.target.checked;
+  updateUrl();
+});
+
 // ============================================
 // SAVED FEEDS (localStorage, organised in folders)
 // ============================================
@@ -2557,6 +2652,7 @@ function currentBuilderState() {
     excludeTerms: [...excludeTerms],
     siteTerms: [...siteTerms],
     excludeSiteTerms: [...excludeSiteTerms],
+    cleanFeed: cleanFeed,
     country: document.getElementById('countrySelect').value,
     when: document.getElementById('whenSelect').value,
   };
@@ -2577,6 +2673,10 @@ function applyBuilderState(s) {
   excludeTerms = [...(s.excludeTerms || [])];
   siteTerms = [...(s.siteTerms || [])];
   excludeSiteTerms = [...(s.excludeSiteTerms || [])];
+  // Older saved feeds (pre-clean-feed) won't have the flag; default to ON to
+  // match the live default rather than silently disabling junk filtering.
+  cleanFeed = (s.cleanFeed !== undefined) ? !!s.cleanFeed : true;
+  document.getElementById('cleanFeedToggle').checked = cleanFeed;
   document.getElementById('searchInput').value = '';
   if (s.country) document.getElementById('countrySelect').value = s.country;
   if (s.when !== undefined) document.getElementById('whenSelect').value = s.when;
