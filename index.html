@@ -1803,24 +1803,28 @@ function includeGroups() {
 
 function buildQuery() {
   const fragments = [];
+  let positive = 0; // a feed needs >=1 positive term; exclusions alone aren't a feed
 
   // 1. Include OR-groups, AND-ed together (joined by spaces = AND).
   includeGroups().forEach(g => {
     const frag = compileGroup(g);
-    if (frag) fragments.push(frag);
+    if (frag) { fragments.push(frag); positive++; }
   });
 
   // 2. Exact phrases — each always quoted, AND-ed.
   phraseTerms.forEach(p => {
     const t = String(p).trim().replace(/"/g, '');
-    if (t) fragments.push(`"${t}"`);
+    if (t) { fragments.push(`"${t}"`); positive++; }
   });
 
-  // 3. Site restriction — one OR-group of site: filters.
+  // 3. Site restriction — one OR-group of site: filters (a publisher-only feed is valid).
   if (siteTerms.length) {
     const siteFrag = compileGroup(siteTerms.map(s => 'site:' + s));
-    if (siteFrag) fragments.push(siteFrag);
+    if (siteFrag) { fragments.push(siteFrag); positive++; }
   }
+
+  // No positive term → no feed (don't emit a query of only -exclusions / clean-feed junk).
+  if (positive === 0) return '';
 
   // 3b. Site exclusions — each an independent NOT clause (-site:domain).
   excludeSiteTerms.forEach(s => {
