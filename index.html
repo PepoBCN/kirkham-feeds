@@ -1909,14 +1909,14 @@ function isGuardianOnly() {
 
 // Relative endpoint path for the current feed, or '' if there's no feed.
 //   no positive term            -> '' (empty-state, unchanged)
-//   Guardian-only publisher     -> /.netlify/functions/guardian?q=...&when=...
+//   Guardian-only publisher     -> /.netlify/functions/guardian?q=...  (deep archive)
 //   otherwise                   -> /.netlify/functions/fetch-rss?url=<Google News>
 function feedPath() {
   if (buildQuery() === '') return '';
   if (isGuardianOnly()) {
-    const whenVal = document.getElementById('whenSelect').value;
-    return '/.netlify/functions/guardian?q=' + encodeURIComponent(buildGuardianQuery()) +
-      (whenVal ? '&when=' + encodeURIComponent(whenVal) : '');
+    // No time window: the Guardian feed's whole value is its deep relevant archive
+    // (historical mentions). Readers sort by pubDate, so newest still shows first.
+    return '/.netlify/functions/guardian?q=' + encodeURIComponent(buildGuardianQuery());
   }
   return '/.netlify/functions/fetch-rss?url=' + encodeURIComponent(buildUrl());
 }
